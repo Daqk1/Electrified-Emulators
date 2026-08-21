@@ -1,1 +1,1 @@
-This is the Github for Team TBD
+This is the Github for Team Electrified Emulators
