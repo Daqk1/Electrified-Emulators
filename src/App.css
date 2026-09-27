@@ -1,0 +1,45 @@
+/* App.css */
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+#root {
+  width: 100vw;
+  height: 100vh;
+}
+
+.App {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Zoomable grid background */
+.grid-stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+}
+
+/* Fixed component container stage */
+.container-stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+.header-stage{
+  position: absolute;
+  top: 0;
+  left: 10;
+  z-index: 3;
+  pointer-events: none;
+}
