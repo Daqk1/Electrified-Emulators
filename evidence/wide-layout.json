@@ -1,0 +1,17 @@
+{
+  "canvas": {
+    "bottom": 1408,
+    "height": 1356,
+    "left": 260,
+    "right": 2280,
+    "top": 52,
+    "width": 2020,
+    "x": 260,
+    "y": 52
+  },
+  "height": 1440,
+  "overflow": 2560,
+  "parts": 5,
+  "width": 2560,
+  "wires": 5
+}

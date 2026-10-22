@@ -1,0 +1,10 @@
+* CircuitEDU Schematic Netlist
+* Exported: 2026/10/19 上午5:00:00
+
+V1       0 (GND) N001     5V
+SW1      N001 N002        SPST
+R1       N002 N003        220Ω
+D1       N003 0 (GND)     Red LED
+GND      0 (GND)          0V
+
+.END
