@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 :root {
   --text: #6b6375;
   --text-h: #08060d;
@@ -109,3 +110,18 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+=======
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+>>>>>>> 7f29c744c86dfef2cb7c0cb1265221d80fcd75bd
