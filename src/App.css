@@ -1,0 +1,97 @@
+/* App.css */
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+#root {
+  width: 100vw;
+  height: 100vh;
+}
+
+.App {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+@font-face {
+  font-family: "SuperMaples";
+  src: url("/SuperMaples.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Regalia Monarch";
+  src: url("/RegaliaMonarchl.otf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Moonbright Demo";
+  src: url("/MoonbrightDemo.ttf") format("truetype");
+}
+body {
+  background-color: #4768b7;
+}
+/* Zoomable grid background */
+.grid-stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+}
+
+/* Fixed component container stage */
+.container-stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+.header-stage{
+  position: absolute;
+  top: 0;
+  left: 10;
+  z-index: 3;
+  pointer-events: none;
+}
+.login-container {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+}
+
+#headerSVG {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
+.login-form {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.login-form input {
+  width: 300px;
+  height: 50px;
+  font-size: 18px;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.login-form button {
+  width: 300px;
+  height: 50px;
+  font-size: 18px;
+}
