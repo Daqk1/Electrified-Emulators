@@ -4,17 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-<<<<<<< HEAD
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsx watch server.ts"
-=======
-    "test": "echo \"Error: no test specified\" && exit 1"
->>>>>>> 7f29c744c86dfef2cb7c0cb1265221d80fcd75bd
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-<<<<<<< HEAD
   "type": "module",
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -29,13 +24,5 @@
     "@types/node": "^26.6.5",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
-=======
-  "type": "commonjs",
-  "dependencies": {
-    "cors": "^2.8.6",
-    "dotenv": "^18.0.5",
-    "express": "^5.2.1",
-    "mongoose": "^9.11.0"
->>>>>>> 7f29c744c86dfef2cb7c0cb1265221d80fcd75bd
   }
 }

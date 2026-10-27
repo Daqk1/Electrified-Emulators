@@ -17,7 +17,10 @@ const PORT = 5001;
 
 // Middleware
 app.use(cors({
-  origin: "http://localhost:5174"
+  origin:[
+    "http://localhost:5173",
+    "http://localhost:5174"
+  ] 
 }));
 
 app.use(express.json());
