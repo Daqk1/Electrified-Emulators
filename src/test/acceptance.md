@@ -2,12 +2,21 @@
 
 Completed 2026-10-20. The user authorized all remaining phases without intermediate approval pauses.
 
+## TypeScript consolidation recheck — 2026-10-26
+
+- One configured entry: index.html → src/main.tsx → src/App.tsx; all npm app/test commands explicitly select vite.config.ts.
+- Duplicate JSX entry files, prototype-only modules/styles and unused JavaScript lint config preserved outside src in legacy/javascript-prototype. All 13 files match their original contents; backend/public assets remain in place.
+- Unused direct Babel/React Compiler tooling removed; no runtime dependencies added.
+- Tests use versioned original snapshots in src/test/reference, whose SHA-256 hashes match the recorded pre-migration baseline. Git attributes protect reference bytes and LF fixture endings across Windows checkouts.
+- All 185 tests across 24 files, strict production build and three fixture reproduction checks pass. Dev-server HTML/main.tsx/App.tsx return HTTP 200. Production assets contain no legacy backend endpoint, Konva, SVG.js or React Compiler runtime.
+- Existing screenshots and browser evidence document the 2026-10-20 migration checks; the original web/ folder is now editing_window/.
+
 ## Automated checks
 
 | Check | Result |
 | --- | --- |
-| npm.cmd test | 185 tests across 24 files pass |
-| npm.cmd run build | Strict TypeScript and Vite production build pass |
+| npm test | 185 tests across 24 files pass |
+| npm run build | Strict TypeScript and Vite production build pass |
 | node src/test/capture-prototype.mjs --check | All 3 captured fixtures reproduce |
 | Demo netlist | Exact spacing/order/blank lines/final newline match; only timestamp excluded |
 | Original JSON | Parse/save/parse preserves data; original timestamp yields byte-identical file |

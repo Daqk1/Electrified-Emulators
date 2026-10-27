@@ -18,7 +18,7 @@ import { getPinAbsolutePosition, wirePath } from '../core/geometry';
 
 // Run only the original symbol callbacks, never its DOM constructor.
 const original = vm.runInNewContext(
-  readFileSync(resolve(process.cwd(), '../app.js'), 'utf8') + '\nCOMPONENT_TEMPLATES;',
+  readFileSync(resolve(process.cwd(), 'src/test/reference/app.js'), 'utf8') + '\nCOMPONENT_TEMPLATES;',
   { window: { addEventListener() {} } },
 ) as Record<ComponentType, { render: () => string }>;
 const types = Object.keys(COMPONENT_TEMPLATES) as ComponentType[];
@@ -79,7 +79,7 @@ describe('prototype symbol parity', () => {
   });
 
   it('matches all ten original palette cards, including special fills and pin sizes', () => {
-    const reference = new DOMParser().parseFromString(readFileSync(resolve(process.cwd(), '../index.html'), 'utf8'), 'text/html');
+    const reference = new DOMParser().parseFromString(readFileSync(resolve(process.cwd(), 'src/test/reference/index.html'), 'utf8'), 'text/html');
     const { container } = render(<Palette />);
     expect(container.querySelectorAll('.component-card')).toHaveLength(10);
     for (const type of types) {

@@ -1,17 +1,19 @@
 # CircuitEDU React editor
 
-All nine migration phases are complete: React 18 function components, strict TypeScript, Vite, native SVG, two reducers with React context, FileSaver.js downloads, and Vitest/React Testing Library tests. The original root app.js, index.html and style.css remain unchanged.
+All nine migration phases are complete: React 18 function components, strict TypeScript, Vite, native SVG, two reducers with React context, FileSaver.js downloads, and Vitest/React Testing Library tests. The editor has one entry chain: index.html → src/main.tsx → src/App.tsx, configured by vite.config.ts.
+
+The duplicate JavaScript entry files and their prototype-only modules are preserved under [legacy/javascript-prototype](legacy/javascript-prototype/README.md), with a feature audit explaining what the editor already covers and what remains future login/dashboard work. They are outside the editor source tree. JavaScript files under src/test/reference are frozen test oracles, not a second app.
 
 ## Run
 
-Use Node.js 24.15+ (24.x) or Node.js 26+. From web/:
+Use Node.js 24.15+ (24.x) or Node.js 26+. From editing_window/:
 
 ~~~powershell
-npm.cmd ci
-npm.cmd run dev
+npm ci
+npm run dev
 ~~~
 
-Open <http://127.0.0.1:5173/>. The dev server binds to localhost only and fails if port 5173 is occupied. Stop it with Ctrl+C. On this Windows machine use npm.cmd because its PowerShell npm launcher resolves an invalid roaming path. Elsewhere the equivalent npm commands work normally.
+Open <http://127.0.0.1:5173/>. The dev server binds to localhost only and fails if port 5173 is occupied. Stop it with Ctrl+C.
 
 Normal startup is empty. Click **Load Demo Circuit** for the original five-part LED driver. The temporary ?demo=1 entry was removed; all normal entries now open the actual editor. DemoPreview.tsx remains an isolated renderer test harness.
 
@@ -28,14 +30,16 @@ Normal startup is empty. Click **Load Demo Circuit** for the original five-part 
 ## Verify
 
 ~~~powershell
-npm.cmd test
-npm.cmd run build
+npm test
+npm run build
 node src/test/capture-prototype.mjs --check
 ~~~
 
 Final verification on 2026-10-20: **185 tests across 24 files pass**, strict TypeScript and production build pass, and all three original compatibility fixtures reproduce. The demo netlist matches except its timestamp; legacy JSON round-trips exactly with its original timestamp.
 
-For production preview run npm.cmd run preview and open <http://127.0.0.1:4173/>. Watch tests with npm.cmd run test:watch or type-check with npm.cmd run typecheck.
+Revalidated after TypeScript consolidation on 2026-10-26: all 185 tests, strict production build, fixture reproduction and served-entry HTTP checks pass. The 13 archived JavaScript prototype/tooling files match their original contents. The production bundle contains none of the legacy backend API, Konva, SVG.js or React Compiler runtime. The browser screenshots/download evidence below records the earlier migration verification.
+
+For production preview run npm run preview and open <http://127.0.0.1:4173/>. Watch tests with npm run test:watch or type-check with npm run typecheck.
 
 See [acceptance results](src/test/acceptance.md) for test coverage, browser checks, bug fixes and retained prototype behavior. Browser verification included real palette drop, release outside SVG under pointer capture, rotated-pin wiring from Drag mode, inspector edits, legacy import, invalid-import modal recovery and real SVG/PNG/JSON downloads. The demo PNG is 1240×920; the selected-circuit SVG has no selection decoration.
 
@@ -54,5 +58,5 @@ Evidence: [completed editor](evidence/final-editor.png), [import error modal](ev
 
 Only React, ReactDOM and the requested FileSaver.js are runtime dependencies. No backend, LMS, dashboard, Home routing, autosave server, simulation, Konva or external state library was added. Dependencies are locked.
 
-The ignored .reference-qa/ folder is a local comparison copy, excluded from the production build. Its HTML has only the Drag-button ID and closing SVG tag corrected so the original can start. The actual reference files were never edited. No Git repository was initialized; include the fixtures and lockfile when adding this work to source control.
+The ignored .reference-qa/ folder is a local comparison copy, excluded from the production build. Tests now use [versioned original reference snapshots](src/test/reference/README.md) with the original SHA-256 hashes, so they do not depend on that folder or the former parent-directory files. Git attributes preserve reference bytes and LF fixture line endings. The JavaScript prototype archive, existing backend and public assets remain available for future work; the editor adds none of their runtime dependencies.
 

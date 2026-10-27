@@ -3,6 +3,8 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   plugins: [react()],
+  // Only the editor HTML is an app entry; legacy/reference HTML is not scanned.
+  optimizeDeps: { entries: ['index.html'] },
   server: {
     host: '127.0.0.1',
     port: 5173,

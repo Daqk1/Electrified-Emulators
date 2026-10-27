@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import vm from 'node:vm';
 
-const prototypeUrl = new URL('../../../app.js', import.meta.url);
+const prototypeUrl = new URL('./reference/app.js', import.meta.url);
 const fixtureDirectory = new URL('./fixtures/', import.meta.url);
 const source = await readFile(prototypeUrl, 'utf8');
 assert.equal(
