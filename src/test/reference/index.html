@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CircuitEDU - Interactive Schematic CAD Prototype</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Header & Application Toolbar -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">⚡</div>
+      <div class="brand-title">CircuitEDU</div>
+      <div class="brand-badge">Prototype v1.0</div>
+    </div>
+
+    <!-- Central CAD Mode & Action Toolbar -->
+    <div class="toolbar">
+      <!-- Tool Modes -->
+      <div class="toolbar-group">
+        <button id="tool-select" class="btn active" title="Select & Move (V)">
+          <span class="btn-icon">↖</span> Select
+        </button>
+        <button id="tool-wire" class="btn" title="Smart Pin-to-Pin Wire Tool (W)">
+          <span class="btn-icon">⚡</span> Wire
+        </button>
+        <button id="tool-pan" class="btn" title="Pan Canvas (Space / H)">
+          <span class="btn-icon">✋</span> Drag
+        </button>
+      </div>
+
+      <div class="toolbar-separator"></div>
+
+      <!-- Component Transforms -->
+      <div class="toolbar-group">
+        <button id="btn-rotate" class="btn" title="Rotate Selected Component (R)">
+          <span class="btn-icon">↻</span> Rotate 90°
+        </button>
+        <button id="btn-delete" class="btn" title="Delete Selected (Delete / Backspace)">
+          <span class="btn-icon">🗑</span> Delete
+        </button>
+      </div>
+
+      <div class="toolbar-separator"></div>
+
+      <!-- Canvas Viewport Controls -->
+      <div class="toolbar-group">
+        <button id="btn-zoom-in" class="btn" title="Zoom In (+)">
+          <span class="btn-icon">🔍+</span>
+        </button>
+        <button id="btn-zoom-out" class="btn" title="Zoom Out (-)">
+          <span class="btn-icon">🔍-</span>
+        </button>
+        <button id="btn-zoom-reset" class="btn" title="Reset View (100%)">
+          100%
+        </button>
+        <button id="btn-toggle-grid" class="btn active" title="Toggle Grid Snapping">
+          <span class="btn-icon">▦</span> Grid: 20px
+        </button>
+      </div>
+
+      <div class="toolbar-separator"></div>
+
+      <!-- File & Export Actions -->
+      <div class="toolbar-group">
+        <button id="btn-export-png" class="btn" title="Export as High-Resolution PNG">
+          <span class="btn-icon">🖼</span> PNG
+        </button>
+        <button id="btn-export-svg" class="btn" title="Download Vector SVG File">
+          <span class="btn-icon">📐</span> SVG
+        </button>
+        <button id="btn-save-json" class="btn" title="Save / Download Schematic JSON">
+          <span class="btn-icon">💾</span> JSON
+        </button>
+        <button id="btn-load-json" class="btn" title="Load Schematic JSON">
+          <span class="btn-icon">📂</span> Load
+        </button>
+        <input type="file" id="file-input-json" accept=".json" style="display:none;">
+      </div>
+    </div>
+
+    <!-- Right Quick Actions -->
+    <div>
+      <button id="btn-demo-circuit" class="btn btn-primary" title="Load sample LED Driver Circuit">
+        <span>⚡ Load Demo Circuit</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main CAD Container -->
+  <div class="app-container">
+
+    <!-- Left Sidebar: Component Symbol Palette -->
+    <aside class="sidebar-left">
+      <div class="sidebar-header">
+        <span>Symbol Library</span>
+        <span style="font-size: 10px; color: var(--accent-color);">Drag / Click</span>
+      </div>
+
+      <div class="component-categories">
+        <!-- Category: Passives -->
+        <div>
+          <div class="category-title">Passive Components</div>
+          <div class="component-grid">
+            <div class="component-card" draggable="true" data-type="resistor">
+              <svg viewBox="-40 -20 80 40">
+                <path d="M -30 0 L -18 0 L -14 -8 L -6 8 L 2 -8 L 10 8 L 14 -8 L 18 0 L 30 0" fill="none" stroke="#f0f0f5" stroke-width="2"/>
+                <circle cx="-30" cy="0" r="3" fill="#ef476f"/>
+                <circle cx="30" cy="0" r="3" fill="#ef476f"/>
+              </svg>
+              <div class="comp-name">Resistor (R)</div>
+            </div>
+
+            <div class="component-card" draggable="true" data-type="capacitor">
+              <svg viewBox="-40 -20 80 40">
+                <path d="M -30 0 L -6 0 M -6 -12 L -6 12 M 6 -12 L 6 12 M 6 0 L 30 0" fill="none" stroke="#f0f0f5" stroke-width="2"/>
+                <circle cx="-30" cy="0" r="3" fill="#ef476f"/>
+                <circle cx="30" cy="0" r="3" fill="#ef476f"/>
+              </svg>
+              <div class="comp-name">Capacitor (C)</div>
+            </div>
+
+            <div class="component-card" draggable="true" data-type="inductor">
+              <svg viewBox="-40 -20 80 40">
+                <path d="M -30 0 L -18 0 A 6 6 0 0 1 -6 0 A 6 6 0 0 1 6 0 A 6 6 0 0 1 18 0 L 30 0" fill="none" stroke="#f0f0f5" stroke-width="2"/>
+                <circle cx="-30" cy="0" r="3" fill="#ef476f"/>
+                <circle cx="30" cy="0" r="3" fill="#ef476f"/>
+              </svg>
+              <div class="comp-name">Inductor (L)</div>
+            </div>
+
+            <div class="component-card" draggable="true" data-type="switch">
+              <svg viewBox="-40 -20 80 40">
+                <path d="M -30 0 L -12 0 M -12 0 L 10 -10 M 12 0 L 30 0" fill="none" stroke="#f0f0f5" stroke-width="2"/>
+                <circle cx="-12" cy="0" r="2.5" fill="#f0f0f5"/>
+                <circle cx="12" cy="0" r="2.5" fill="#f0f0f5"/>
+                <circle cx="-30" cy="0" r="3" fill="#ef476f"/>
+                <circle cx="30" cy="0" r="3" fill="#ef476f"/>
+              </svg>
+              <div class="comp-name">SPST Switch</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Category: Semiconductors -->
+        <div>
+          <div class="category-title">Semiconductors & Diodes</div>
+          <div class="component-grid">
+            <div class="component-card" draggable="true" data-type="led">
+              <svg viewBox="-40 -20 80 40">
+                <path d="M -30 0 L -10 0 M -10 -10 L 10 0 L -10 10 Z M 10 -10 L 10 10 M 10 0 L 30 0" fill="none" stroke="#f0f0f5" stroke-width="2"/>
+                <!-- Optical light rays -->
+                <path d="M -2 -8 L 4 -16 M 1 -17 L 4 -16 L 4 -13" fill="none" stroke="#ffd166" stroke-width="1.5"/>
+                <path d="M 4 -5 L 10 -13 M 7 -14 L 10 -13 L 10 -10" fill="none" stroke="#ffd166" stroke-width="1.5"/>
+                <circle cx="-30" cy="0" r="3" fill="#ef476f"/>
+                <circle cx="30" cy="0" r="3" fill="#ef476f"/>
+              </svg>
+              <div class="comp-name">LED (D)</div>
+            </div>
+
+            <div class="component-card" draggable="true" data-type="diode">
+              <svg viewBox="-40 -20 80 40">
+                <path d="M -30 0 L -10 0 M -10 -10 L 10 0 L -10 10 Z M 10 -10 L 10 10 M 10 0 L 30 0" fill="none" stroke="#f0f0f5" stroke-width="2"/>
+                <circle cx="-30" cy="0" r="3" fill="#ef476f"/>
+                <circle cx="30" cy="0" r="3" fill="#ef476f"/>
+              </svg>
+              <div class="comp-name">Diode (D)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Category: Sources & Grounds -->
+        <div>
+          <div class="category-title">Sources & Reference</div>
+          <div class="component-grid">
+            <div class="component-card" draggable="true" data-type="dc_source">
+              <svg viewBox="-40 -20 80 40">
+                <circle cx="0" cy="0" r="14" fill="none" stroke="#f0f0f5" stroke-width="2"/>
+                <path d="M -30 0 L -14 0 M 14 0 L 30 0" fill="none" stroke="#f0f0f5" stroke-width="2"/>
+                <text x="-6" y="-3" fill="#f0f0f5" font-size="9" font-family="sans-serif" font-weight="bold">-</text>
+                <text x="3" y="-3" fill="#f0f0f5" font-size="9" font-family="sans-serif" font-weight="bold">+</text>
+                <circle cx="-30" cy="0" r="3" fill="#ef476f"/>
+                <circle cx="30" cy="0" r="3" fill="#ef476f"/>
+              </svg>
+              <div class="comp-name">DC Source (V)</div>
+            </div>
+
+            <div class="component-card" draggable="true" data-type="ground">
+              <svg viewBox="-30 -10 60 40">
+                <path d="M 0 -10 L 0 6 M -14 6 L 14 6 M -9 11 L 9 11 M -4 16 L 4 16" fill="none" stroke="#f0f0f5" stroke-width="2"/>
+                <circle cx="0" cy="-10" r="3" fill="#ef476f"/>
+              </svg>
+              <div class="comp-name">Ground (GND)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Category: Logic Gates -->
+        <div>
+          <div class="category-title">Logic Gates</div>
+          <div class="component-grid">
+            <div class="component-card" draggable="true" data-type="and_gate">
+              <svg viewBox="-40 -20 80 40">
+                <path d="M -30 -8 L -14 -8 M -30 8 L -14 8 M -14 -14 L 0 -14 A 14 14 0 0 1 0 14 L -14 14 Z M 14 0 L 30 0" fill="none" stroke="#f0f0f5" stroke-width="2"/>
+                <circle cx="-30" cy="-8" r="3" fill="#ef476f"/>
+                <circle cx="-30" cy="8" r="3" fill="#ef476f"/>
+                <circle cx="30" cy="0" r="3" fill="#ef476f"/>
+              </svg>
+              <div class="comp-name">AND Gate</div>
+            </div>
+
+            <div class="component-card" draggable="true" data-type="or_gate">
+              <svg viewBox="-40 -20 80 40">
+                <path d="M -30 -8 L -12 -8 M -30 8 L -12 8 M -16 -14 Q 0 -14 14 0 Q 0 14 -16 14 Q -8 0 -16 -14 Z M 14 0 L 30 0" fill="none" stroke="#f0f0f5" stroke-width="2"/>
+                <circle cx="-30" cy="-8" r="3" fill="#ef476f"/>
+                <circle cx="-30" cy="8" r="3" fill="#ef476f"/>
+                <circle cx="30" cy="0" r="3" fill="#ef476f"/>
+              </svg>
+              <div class="comp-name">OR Gate</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- Center Interactive SVG Canvas -->
+    <main class="canvas-wrapper" id="canvas-container" tabindex="0">
+      
+      <!-- Current Mode Overlay -->
+      <div class="mode-indicator" id="mode-badge">
+        <div class="mode-dot" id="mode-dot"></div>
+        <span id="mode-text">Tool: Select & Move</span>
+      </div>
+
+      <!-- Main SVG Layer with Grid, Component, and Wiring Groups -->
+      <svg id="circuit-canvas">
+        <defs>
+          <!-- Minor & Major Graph Grid Pattern -->
+          <pattern id="grid-pattern-minor" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1"/>
+          </pattern>
+          <pattern id="grid-pattern-major" width="100" height="100" patternUnits="userSpaceOnUse">
+            <rect width="100" height="100" fill="url(#grid-pattern-minor)"/>
+            <path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1.2"/>
+          </pattern>
+
+          <!-- Pin marker & Glow filters -->
+          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#00b4d8"/>
+          </filter>
+        </defs>
+
+        <!-- World Transform Group for Pan & Zoom -->
+        <g id="world-root">
+          <!-- Background Graph Grid -->
+          <rect id="canvas-bg" x="-10000" y="-10000" width="20000" height="20000" fill="url(#grid-pattern-major)"/>
+
+          <!-- Layer 1: Electrical Connection Wires (Nets) -->
+          <g id="wires-layer"></g>
+
+          <!-- Layer 2: Temporary Interactive Wire Drawing Preview -->
+          <g id="wire-preview-layer"></g>
+
+          <!-- Layer 3: Electrical Components & Symbols -->
+          <g id="components-layer"></g>
+
+          <!-- Layer 4: Selection Boxes & Overlays -->
+          <g id="selection-layer"></g>
+        </g>
+      </d>
+    </main>
+
+    <!-- Right Sidebar: Inspector & Netlist -->
+    <aside class="sidebar-right">
+      <div class="tab-nav">
+        <button class="tab-btn active" data-tab="inspector">Properties</button>
+        <button class="tab-btn" data-tab="netlist">Netlist / Nodes</button>
+      </div>
+
+      <!-- Properties Tab -->
+      <div class="inspector-body" id="tab-content-inspector">
+        <div id="inspector-empty" style="color: var(--text-muted); font-size: 12px; text-align: center; margin-top: 40px;">
+          Select a component or wire to inspect and edit its parameters.
+        </div>
+
+        <div id="inspector-content" style="display:none; flex-direction: column; gap: 14px;">
+          <div class="form-group">
+            <label class="form-label">Identifier / Label</label>
+            <input type="text" id="prop-id" class="form-control" placeholder="R1">
+          </div>
+
+          <div class="form-group" id="prop-value-group">
+            <label class="form-label">Component Value</label>
+            <input type="text" id="prop-value" class="form-control" placeholder="10k">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Rotation</label>
+            <div class="property-row">
+              <span class="prop-label">Angle:</span>
+              <span class="prop-value" id="prop-rotation-display">0°</span>
+            </div>
+            <button id="btn-prop-rotate" class="btn" style="margin-top: 6px; width: 100%; justify-content: center; background: var(--bg-tertiary);">
+              ↻ Rotate 90°
+            </button>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Position</label>
+            <div class="property-row">
+              <span class="prop-label">Grid Coordinates:</span>
+              <span class="prop-value" id="prop-position-display">X: 0, Y: 0</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Terminals / Pins</label>
+            <div id="prop-pins-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Netlist Tab -->
+      <div class="inspector-body" id="tab-content-netlist" style="display: none;">
+        <div class="category-title" style="margin-bottom: 8px;">Resolved Circuit Nodes</div>
+        <div class="netlist-container" id="netlist-output">
+          // CircuitEDU Auto-Generated Netlist
+          No connections yet.
+        </div>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- Bottom Status Bar -->
+  <footer>
+    <div class="status-left">
+      <div class="status-badge">
+        <div class="status-dot"></div>
+        <span>Engine: SVG Vector CAD</span>
+      </div>
+      <div>Cursor: <span id="status-coords">X: 0, Y: 0</span></div>
+      <div>Grid Snap: <span id="status-snap">Enabled (20px)</span></div>
+    </div>
+    <div class="status-right">
+      <div>Components: <span id="status-components">0</span></div>
+      <div>Nets / Wires: <span id="status-nets">0</span></div>
+      <div>Zoom: <span id="status-zoom">100%</span></div>
+    </div>
+  </footer>
+
+  <!-- Modal Export / Notice Dialog -->
+  <div class="modal-overlay" id="modal-container">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-title">Export Options</div>
+        <button class="modal-close" id="btn-modal-close">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-body">
+        Export dialog text.
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="btn-modal-cancel">Close</button>
+        <button class="btn btn-primary" id="btn-modal-confirm">Download</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>

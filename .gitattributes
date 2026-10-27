@@ -1,0 +1,5 @@
+# Preserve the original oracle bytes, including their recorded SHA-256 hashes.
+src/test/reference/* -text
+# Prototype exports use LF; Windows checkouts must not rewrite these fixtures.
+src/test/fixtures/*.json text eol=lf
+src/test/fixtures/*.txt text eol=lf

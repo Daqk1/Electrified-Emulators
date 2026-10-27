@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { SVG, type Svg } from "@svgdotjs/svg.js";
 
@@ -12,12 +11,15 @@ interface PersonalProject {
 }
 
 export default function PersonalProjectList() {
-
   const [projects, setProjects] = useState<PersonalProject[]>([]);
   const [error, setError] = useState<string>("");
 
   const svgRef = useRef<HTMLDivElement>(null);
 
+  function handleClick(project:PersonalProject) {
+    console.log("Personal project click",project);
+    window.location.href = "/editor";
+  }
   // Get personal projects from MongoDB backend
   useEffect(() => {
     const controller = new AbortController();
@@ -26,7 +28,7 @@ export default function PersonalProjectList() {
       try {
         const response = await fetch(
           "http://localhost:5001/personal-projects",
-          { signal: controller.signal }
+          { signal: controller.signal },
         );
 
         if (!response.ok) {
@@ -37,7 +39,6 @@ export default function PersonalProjectList() {
 
         console.log("Personal Projects:", data);
         setProjects(data);
-
       } catch (error) {
         if (!controller.signal.aborted) {
           console.error("Error loading projects:", error);
@@ -56,32 +57,28 @@ export default function PersonalProjectList() {
     draw: Svg,
     x: number,
     y: number,
-    text: string
+    text: string,
+    handleClick: () => void,
   ): void {
-
-    draw
-      .rect(800, 30)
-      .move(x, y)
-      .fill("#f0f0f0");
+    draw.rect(800, 30).move(x, y).fill("#f0f0f0").click(handleClick);
 
     draw
       .text(text)
       .move(x + 20, y + 5)
       .font({
         size: 14,
-        family: "Arial"
-      });
+        family: "Arial",
+      })
+       .click(handleClick);
   }
 
   // Draw personal projects
   useEffect(() => {
-
     const container = svgRef.current;
 
     if (!container) return;
 
     function drawProjects() {
-
       const width = window.innerWidth;
 
       // Height grows automatically
@@ -93,18 +90,13 @@ export default function PersonalProjectList() {
       container.innerHTML = "";
 
       // Create ONE SVG
-      const draw = SVG()
-        .addTo(container)
-        .size(width, height);
+      const draw = SVG().addTo(container).size(width, height);
 
       // Personal Projects header
-      draw
-        .rect(width, 30)
-        .fill("#ffffff")
-        .stroke({
-          color: "#000",
-          width: 1
-        });
+      draw.rect(width, 30).fill("#ffffff").stroke({
+        color: "#000",
+        width: 1,
+      });
 
       draw
         .text("Personal Projects")
@@ -112,19 +104,18 @@ export default function PersonalProjectList() {
         .fill("#000")
         .font({
           size: 24,
-          family: "Arial"
+          family: "Arial",
         });
 
       // Draw every project
       projects.forEach((project, index) => {
-
         project_box(
           draw,
           300,
           60 + index * 40,
-          project.name ?? project.title ?? "Untitled Project"
+          project.name ?? project.title ?? "Untitled Project",
+          () => handleClick(project),
         );
-
       });
     }
 
@@ -137,7 +128,6 @@ export default function PersonalProjectList() {
       window.removeEventListener("resize", drawProjects);
       container.innerHTML = "";
     };
-
   }, [projects]);
 
   return (

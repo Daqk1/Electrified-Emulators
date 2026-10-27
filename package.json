@@ -1,18 +1,25 @@
 {
   "name": "circuitedu-ts",
+  "version": "0.1.0",
   "private": true,
-  "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": "^24.15.0 || >=26.0.0"
+  },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc --noEmit && vite build",
     "dev:all": "concurrently -k \"npm run dev\" \"npm --prefix backend run dev\"",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run --config vite.config.ts",
+    "test:watch": "vitest --config vite.config.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@svgdotjs/svg.js": "^3.2.8",
     "fabric": "^7.4.0",
+    "file-saver": "2.0.5",
     "konva": "^10.3.2",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
@@ -22,6 +29,10 @@
     "@babel/core": "^7.29.7",
     "@eslint/js": "^10.0.1",
     "@rolldown/plugin-babel": "^0.2.3",
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.3",
+    "@types/file-saver": "2.0.7",
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
@@ -32,8 +43,10 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.7",
     "globals": "^17.13.0",
+    "jsdom": "30.1.3",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.71.2",
-    "vite": "^8.3.4"
+    "vite": "^8.3.4",
+    "vitest": "5.0.5"
   }
 }

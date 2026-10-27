@@ -63,7 +63,7 @@ export default function Dashboard() {
     <div>
       <div ref={svgRef}></div>
 
-      <AssignmentList />
+        <AssignmentList/>
 
       <PersonalProjectList />
     </div>

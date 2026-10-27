@@ -1,0 +1,615 @@
+:root {
+  --bg-primary: #1e1e24;
+  --bg-secondary: #26262e;
+  --bg-tertiary: #2e2e38;
+  --text-main: #f0f0f5;
+  --text-muted: #9e9ea8;
+  --border-color: #3b3b47;
+  --accent-color: #00b4d8;
+  --accent-hover: #0096c7;
+  --wire-color: #06d6a0;
+  --wire-preview: #ffd166;
+  --pin-color: #ef476f;
+  --pin-hover: #ff0054;
+  --grid-line-major: rgba(255, 255, 255, 0.12);
+  --grid-line-minor: rgba(255, 255, 255, 0.04);
+  --grid-bg: #18181d;
+  --selected-color: #00b4d8;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* The React root owns the same full-height flex layout as the prototype body. */
+#root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  min-height: 0;
+}
+
+header, footer {
+  flex-shrink: 0;
+}
+
+.inspector-empty {
+  color: var(--text-muted);
+  font-size: 12px;
+  text-align: center;
+  margin-top: 40px;
+}
+
+.inspector-content { display: flex; flex-direction: column; gap: 14px; }
+.pin-status-list { display: flex; flex-direction: column; gap: 6px; }
+.palette-hint { font-size: 10px; color: var(--accent-color); }
+.inspector-rotate { margin-top: 6px; width: 100%; justify-content: center; background: var(--bg-tertiary); }
+.netlist-container { white-space: pre; overflow: auto; }
+
+.demo-title {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+button { white-space: nowrap; }
+button:focus-visible, .tab-btn:focus-visible { outline: 2px solid var(--accent-color); outline-offset: -2px; }
+button:disabled { cursor: default; }
+.btn:disabled { opacity: 0.65; }
+.sidebar-left, .sidebar-right { flex-shrink: 0; }
+.canvas-wrapper { min-width: 0; }
+#circuit-canvas:focus-visible { outline: 2px solid var(--accent-color); outline-offset: -2px; }
+
+
+/* Header & Main Toolbar */
+header {
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+  z-index: 10;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-icon {
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #00b4d8, #06d6a0);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #fff;
+  font-size: 16px;
+}
+
+.brand-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-main);
+}
+
+.brand-badge {
+  font-size: 10px;
+  background: var(--bg-tertiary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--accent-color);
+  border: 1px solid var(--border-color);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.btn {
+  background: transparent;
+  border: none;
+  color: var(--text-main);
+  padding: 6px 10px;
+  font-size: 13px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.btn:hover {
+  background: var(--bg-tertiary);
+  color: #fff;
+}
+
+.btn.active {
+  background: var(--accent-color);
+  color: #fff;
+}
+
+.btn-icon {
+  font-size: 14px;
+}
+
+.btn-primary {
+  background: var(--accent-color);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+}
+
+.toolbar-separator {
+  width: 1px;
+  height: 20px;
+  background-color: var(--border-color);
+  margin: 0 4px;
+}
+
+/* App Main Container */
+.app-container {
+  display: flex;
+  flex: 1;
+  height: calc(100vh - 84px);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Left Sidebar: Component Palette */
+.sidebar-left {
+  width: 260px;
+  background-color: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  z-index: 5;
+}
+
+.sidebar-header {
+  padding: 12px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.component-categories {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.category-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  padding-left: 4px;
+}
+
+.component-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.component-card {
+  font-family: inherit;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 8px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.component-card:hover {
+  border-color: var(--accent-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.component-card:active {
+  cursor: grabbing;
+}
+
+.component-card svg {
+  width: 54px;
+  height: 36px;
+}
+
+.component-card .comp-name {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-main);
+  margin-top: 4px;
+  text-align: center;
+}
+
+/* Center Workspace / SVG Canvas */
+.canvas-wrapper {
+  flex: 1;
+  background-color: var(--grid-bg);
+  position: relative;
+  overflow: hidden;
+  outline: none;
+}
+
+#circuit-canvas {
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+  display: block;
+}
+
+/* Canvas Overlays & Floating Controls */
+.canvas-floating-nav {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 4px;
+  display: flex;
+  gap: 4px;
+  box-shadow: var(--shadow);
+}
+
+.mode-indicator {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: rgba(38, 38, 46, 0.85);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-main);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mode-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--wire-color);
+}
+
+/* Right Sidebar: Inspector & Netlist */
+.sidebar-right {
+  width: 280px;
+  background-color: var(--bg-secondary);
+  border-left: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  z-index: 5;
+}
+
+.tab-nav {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.tab-btn.active {
+  color: var(--accent-color);
+  border-bottom-color: var(--accent-color);
+  background-color: var(--bg-secondary);
+}
+
+.inspector-body {
+  flex: 1;
+  padding: 14px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.form-control {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 13px;
+  font-family: var(--font-sans);
+  outline: none;
+}
+
+.form-control:focus {
+  border-color: var(--accent-color);
+}
+
+.property-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.property-row .prop-label {
+  color: var(--text-muted);
+}
+
+.property-row .prop-value {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--accent-color);
+}
+
+.netlist-container {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 10px;
+  max-height: 250px;
+  overflow-y: auto;
+  line-height: 1.5;
+  color: #a8dadc;
+}
+
+/* Footer Status Bar */
+footer {
+  height: 32px;
+  background-color: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  z-index: 10;
+}
+
+.status-left, .status-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #06d6a0;
+}
+
+/* SVG Circuit Element Styles */
+.circuit-comp {
+  cursor: move;
+}
+
+.circuit-comp.selected .comp-body {
+  filter: drop-shadow(0 0 5px var(--selected-color));
+}
+
+.circuit-comp.selected .comp-outline {
+  stroke: var(--selected-color);
+  stroke-dasharray: 4,4;
+}
+
+.circuit-pin {
+  cursor: crosshair;
+  transition: r 0.15s ease, fill 0.15s ease;
+}
+
+.circuit-pin:hover {
+  r: 6;
+  fill: var(--pin-hover) !important;
+}
+
+.circuit-pin.snap-target {
+  r: 8;
+  fill: #ffd166 !important;
+  stroke: #ff9f1c;
+  stroke-width: 2px;
+}
+
+.circuit-wire {
+  stroke: var(--wire-color);
+  stroke-width: 2.5px;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  cursor: pointer;
+}
+
+.circuit-wire:hover {
+  stroke: #2ec4b6;
+  stroke-width: 3.5px;
+}
+
+.circuit-wire.selected {
+  stroke: var(--selected-color);
+  stroke-width: 3.5px;
+}
+
+.circuit-wire-preview {
+  stroke: var(--wire-preview);
+  stroke-width: 2px;
+  stroke-dasharray: 4,4;
+  fill: none;
+  pointer-events: none;
+}
+
+.junction-dot {
+  fill: var(--wire-color);
+  stroke: #18181d;
+  stroke-width: 1px;
+}
+
+/* Modal dialog for Export / Code */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-overlay.open {
+  display: flex;
+}
+
+.modal-content {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  width: 540px;
+  max-width: 90vw;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-title {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.modal-body {
+  padding: 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Keep the original desktop layout; wrap the toolbar where it would overflow.
+   These overrides follow the ported rules so the wrapped header can grow. */
+@media (max-width: 1600px) {
+  header { flex-wrap: wrap; height: auto; min-height: 52px; gap: 8px; }
+  .brand { margin-right: auto; }
+  .toolbar { order: 3; width: 100%; overflow-x: auto; padding-bottom: 2px; }
+  .toolbar-group, .toolbar-separator { flex-shrink: 0; }
+  .app-container { min-height: 0; }
+  footer { height: auto; min-height: 32px; flex-wrap: wrap; gap: 6px; padding-top: 6px; padding-bottom: 6px; }
+}
+@media (max-width: 1000px) {
+  .sidebar-left { width: 200px; }
+  .sidebar-right { width: 240px; }
+}
