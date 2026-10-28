@@ -60,7 +60,7 @@ export default function PersonalProjectList() {
     text: string,
     handleClick: () => void,
   ): void {
-    draw.rect(800, 30).move(x, y).fill("#f0f0f0").click(handleClick);
+    draw.rect(800, 30).move(x, y).fill("#f9fad0").click(handleClick);
 
     draw
       .text(text)

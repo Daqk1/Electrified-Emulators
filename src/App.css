@@ -4,7 +4,6 @@ body {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background-color: #4768b7;
 }
 
 #root {
@@ -32,9 +31,7 @@ body {
   font-family: "Moonbright Demo";
   src: url("/MoonbrightDemo.ttf") format("truetype");
 }
-body {
-  background-color: #4768b7;
-}
+
 /* Zoomable grid background */
 .grid-stage {
   position: absolute;

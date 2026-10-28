@@ -56,7 +56,7 @@ function Login() {
       }
     } catch (error) {
       console.error("Login error:", error);
-      setError("Cannot connect to backend server");
+      setError("Cannot connect to backennd server");
     } finally {
       setLoading(false);
     }

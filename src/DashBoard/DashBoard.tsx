@@ -32,7 +32,7 @@ export default function Dashboard() {
       // Draw header background
       header
         .rect(width, height)
-        .fill("#2c287b");
+        .fill("#070621");
 
       // Add title
       header

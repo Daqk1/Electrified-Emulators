@@ -63,7 +63,7 @@ export default function AssignmentList() {
     text: string,
     handleClick: () => void,
   ): void {
-    draw.rect(800, 30).move(x, y).fill("#f0f0f0").click(handleClick);
+    draw.rect(800, 30).move(x, y).fill("#f9fad0").click(handleClick);
 
     draw
       .text(text)
@@ -83,7 +83,7 @@ export default function AssignmentList() {
 
     function drawAssignments() {
       const width = window.innerWidth;
-      const height = 30 + assignments.length * 40;
+      const height = 60 + assignments.length * 40;
 
       // Clear previous SVG
       if (!container) return;
@@ -101,7 +101,7 @@ export default function AssignmentList() {
 
       draw
         .text("Assignments")
-        .move(width / 2 - 55, 5)
+        .move(width / 2 - 85, 5)
         .fill("#000000")
         .font({
           size: 24,
@@ -110,7 +110,7 @@ export default function AssignmentList() {
 
       // Draw each assignment
       assignments.forEach((assignment, index) => {
-        const y = 30 + index * 40;
+        const y = 60 + index * 40;
 
         checkBox(draw, 250, y + 5);
 
