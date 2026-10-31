@@ -17,8 +17,8 @@ export default function PersonalProjectList() {
   const svgRef = useRef<HTMLDivElement>(null);
 
   function handleClick(project:PersonalProject) {
-    console.log("Personal project click",project);
-    window.location.href = "/editor";
+    if (!project._id) return;
+    window.location.href = `/editor?projectId=${encodeURIComponent(project._id)}`;
   }
   // Get personal projects from MongoDB backend
   useEffect(() => {

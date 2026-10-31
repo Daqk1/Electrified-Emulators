@@ -15,6 +15,7 @@ import { NetlistPanel } from "./NetlistPanel";
 import { StatusBar } from "./StatusBar";
 import { Modal } from "./Modal";
 import { useProjectFiles } from "../files/useProjectFiles";
+import { useCircuitPersistence } from "./useCircuitPersistence";
 const toolAppearance: Record<
   Tool,
   { text: string; color: string; cursor: string }
@@ -31,12 +32,19 @@ const toolAppearance: Record<
 // The editor composes UI and browser I/O; rendering and circuit math stay separate.
 export function Editor() {
   const { circuit, editor, dispatch, getSnapshot } = useEditor();
+  const storedUserId = localStorage.getItem("userId");
+  const userId = storedUserId ? Number(storedUserId) : undefined;
   const svgRef = useRef<SVGSVGElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const files = useProjectFiles();
   const tabId = useId();
   const pointer = useCanvasPointer(svgRef);
   const { placePart } = useCircuitCommands();
+  const { persistenceEnabled, saveStatus } = useCircuitPersistence(
+    circuit,
+    dispatch,
+    userId !== undefined && Number.isFinite(userId) ? userId : undefined,
+  );
   useKeyboardShortcuts();
   const tool = toolAppearance[editor.tool];
 
@@ -52,6 +60,16 @@ export function Editor() {
             className="brand-badge">
             Prototype v1.0
           </span>
+          {persistenceEnabled && (
+            <span
+              className={`autosave-status autosave-status-${saveStatus}`}
+              aria-live="polite"
+            >
+              {saveStatus === "saving" && "Autosaving in progress"}
+              {saveStatus === "saved" && "Up to date!"}
+              {saveStatus === "failed" && "Save failed"}
+            </span>
+          )}
         </div>
         <Toolbar
           files={{

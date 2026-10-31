@@ -18,7 +18,7 @@ function Login() {
   async function userSearch(
     username: string,
     password: string,
-  ): Promise<boolean> {
+  ): Promise<{ id: number; username: string } | null> {
     const response = await fetch("http://localhost:5001/api/login", {
       method: "POST",
       headers: {
@@ -30,7 +30,17 @@ function Login() {
       }),
     });
 
-    return response.ok;
+    if (!response.ok) return null;
+
+    const data = (await response.json()) as {
+      user?: { id?: number; username?: string };
+    };
+
+    if (typeof data.user?.id !== "number" || typeof data.user.username !== "string") {
+      return null;
+    }
+
+    return { id: data.user.id, username: data.user.username };
   }
 
   // Handle login button
@@ -44,9 +54,11 @@ function Login() {
     setLoading(true);
 
     try {
-      const valid = await userSearch(username, password);
+      const user = await userSearch(username, password);
 
-      if (valid) {
+      if (user) {
+        localStorage.setItem("userId", String(user.id));
+        localStorage.setItem("username", user.username);
         console.log("Login successful!");
         window.location.href = "/dashboard";
 

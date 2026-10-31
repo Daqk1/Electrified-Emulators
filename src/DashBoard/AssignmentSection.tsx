@@ -17,8 +17,12 @@ export default function AssignmentList() {
 
   const svgRef = useRef<HTMLDivElement>(null);
   function handleClick(assignment: Assignment) {
-    console.log("Clicked assignment:", assignment);
-    window.location.href = "/editor";
+    const params = new URLSearchParams({
+      assignmentId: String(assignment.assignment_id),
+      assignmentName: assignment.name,
+    });
+
+    window.location.href = `/editor?${params.toString()}`;
   }
   // Load assignments from backend
   useEffect(() => {

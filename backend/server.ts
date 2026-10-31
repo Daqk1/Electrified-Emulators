@@ -8,6 +8,7 @@ import dotenv from "dotenv";
 import Assignment from "./models/Assignment.js";
 import PersonalProject from "./models/PersonalProject.js";
 import User from "./models/User.js";
+import CircuitSubmission from "./models/CircuitSubmission.js";
 
 
 dotenv.config();
@@ -62,6 +63,93 @@ app.get("/personal-projects", async (req, res) => {
     });
   }
 });
+
+// Load a user's saved circuit for an assignment or personal project.
+app.get("/api/circuits", async (req, res) => {
+  try {
+    const userId = Number(req.query.userId);
+    const assignmentId = req.query.assignmentId
+      ? Number(req.query.assignmentId)
+      : undefined;
+    const projectId = typeof req.query.projectId === "string"
+      ? req.query.projectId
+      : undefined;
+
+    if (!Number.isFinite(userId) || (!Number.isFinite(assignmentId) && !projectId)) {
+      return res.status(400).json({
+        message: "userId and assignmentId or projectId are required",
+      });
+    }
+
+    const filter = assignmentId !== undefined
+      ? { userId, assignmentId }
+      : { userId, projectId };
+    const saved = await CircuitSubmission.findOne(filter);
+
+    return res.json(saved);
+  } catch (error) {
+    console.error("Circuit load error:", error);
+    return res.status(500).json({ message: "Failed to load circuit" });
+  }
+});
+
+// Create or update the current user's circuit for an assignment or project.
+app.put("/api/circuits", async (req, res) => {
+  try {
+    const { userId, assignmentId, projectId, circuit } = req.body as {
+      userId?: number;
+      assignmentId?: number;
+      projectId?: string;
+      circuit?: {
+        components: unknown[];
+        wires: unknown[];
+      };
+    };
+
+    const numericUserId = Number(userId);
+    const numericAssignmentId = assignmentId === undefined
+      ? undefined
+      : Number(assignmentId);
+
+    if (
+      !Number.isFinite(numericUserId) ||
+      (numericAssignmentId === undefined && !projectId) ||
+      (numericAssignmentId !== undefined && !Number.isFinite(numericAssignmentId)) ||
+      !circuit ||
+      !Array.isArray(circuit.components) ||
+      !Array.isArray(circuit.wires)
+    ) {
+      return res.status(400).json({
+        message: "userId, assignmentId or projectId, and a valid circuit are required",
+      });
+    }
+
+    const filter = numericAssignmentId !== undefined
+      ? { userId: numericUserId, assignmentId: numericAssignmentId }
+      : { userId: numericUserId, projectId };
+
+    const saved = await CircuitSubmission.findOneAndUpdate(
+      filter,
+      {
+        userId: numericUserId,
+        assignmentId: numericAssignmentId,
+        projectId,
+        circuit,
+      },
+      {
+        new: true,
+        upsert: true,
+        runValidators: true,
+      },
+    );
+
+    return res.json(saved);
+  } catch (error) {
+    console.error("Circuit save error:", error);
+    return res.status(500).json({ message: "Failed to save circuit" });
+  }
+});
+
 app.post("/api/login", async (req, res) => {
     console.log("Login request recieved");
   try {
@@ -92,7 +180,11 @@ app.post("/api/login", async (req, res) => {
 }
 
 return res.status(200).json({
-  message: "Login successful!"
+  message: "Login successful!",
+  user: {
+    id: user._id,
+    username: user.username,
+  },
 });
     
 

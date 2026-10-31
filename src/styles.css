@@ -123,6 +123,16 @@ header {
   border: 1px solid var(--border-color);
 }
 
+.autosave-status {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.autosave-status-saving { color: var(--wire-preview); }
+.autosave-status-saved { color: var(--wire-color); }
+.autosave-status-failed { color: var(--pin-color); }
+
 .toolbar {
   display: flex;
   align-items: center;
