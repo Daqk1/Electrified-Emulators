@@ -81,10 +81,16 @@ app.get("/api/circuits", async (req, res) => {
       });
     }
 
-    const filter = assignmentId !== undefined
-      ? { userId, assignmentId }
-      : { userId, projectId };
-    const saved = await CircuitSubmission.findOne(filter);
+    let saved;
+    if (assignmentId !== undefined) {
+      saved = await CircuitSubmission.findOne({ userId, assignmentId });
+    } else if (projectId) {
+      saved = await CircuitSubmission.findOne({ userId, projectId });
+    } else {
+      return res.status(400).json({
+        message: "assignmentId or projectId is required",
+      });
+    }
 
     return res.json(saved);
   } catch (error) {
@@ -124,17 +130,40 @@ app.put("/api/circuits", async (req, res) => {
       });
     }
 
-    const filter = numericAssignmentId !== undefined
-      ? { userId: numericUserId, assignmentId: numericAssignmentId }
-      : { userId: numericUserId, projectId };
+    if (numericAssignmentId !== undefined) {
+      const saved = await CircuitSubmission.findOneAndUpdate(
+        { userId: numericUserId, assignmentId: numericAssignmentId },
+        {
+          $set: {
+            userId: numericUserId,
+            assignmentId: numericAssignmentId,
+            circuit,
+          },
+        },
+        {
+          new: true,
+          upsert: true,
+          runValidators: true,
+        },
+      );
+
+      return res.json(saved);
+    }
+
+    if (!projectId) {
+      return res.status(400).json({
+        message: "assignmentId or projectId is required",
+      });
+    }
 
     const saved = await CircuitSubmission.findOneAndUpdate(
-      filter,
+      { userId: numericUserId, projectId },
       {
-        userId: numericUserId,
-        assignmentId: numericAssignmentId,
-        projectId,
-        circuit,
+        $set: {
+          userId: numericUserId,
+          projectId,
+          circuit,
+        },
       },
       {
         new: true,
