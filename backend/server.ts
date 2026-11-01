@@ -213,8 +213,10 @@ async function startServer() {
     }
 
     await mongoose.connect(mongoURI);
+    await CircuitSubmission.syncIndexes();
 
     console.log("MongoDB connected!");
+    console.log("Circuit submission indexes synchronized!");
 
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

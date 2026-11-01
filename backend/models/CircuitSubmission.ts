@@ -26,11 +26,23 @@ const circuitSubmissionSchema = new Schema<ICircuitSubmission>(
 // A user should have one current circuit per assignment or personal project.
 circuitSubmissionSchema.index(
   { userId: 1, assignmentId: 1 },
-  { unique: true, sparse: true },
+  {
+    unique: true,
+    partialFilterExpression: {
+      assignmentId: { $exists: true },
+    },
+    name: "unique_user_assignment",
+  },
 );
 circuitSubmissionSchema.index(
   { userId: 1, projectId: 1 },
-  { unique: true, sparse: true },
+  {
+    unique: true,
+    partialFilterExpression: {
+      projectId: { $exists: true },
+    },
+    name: "unique_user_project",
+  },
 );
 
 const CircuitSubmission = mongoose.model<ICircuitSubmission>(
