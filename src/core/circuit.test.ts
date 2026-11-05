@@ -23,7 +23,7 @@ describe('immutable component operations', () => {
     const moved = moveComponent(circuit, 'r1', { x: 20, y: 40 });
     expect(getPinAbsolutePosition(moved, wire().from)).toEqual({ x: 50, y: 40 });
     expect(getPinAbsolutePosition(circuit, wire().from)).toEqual({ x: 30, y: 0 });
-    expect(moved.wires).toEqual(circuit.wires);
+    expect(moved.wires[0]).toMatchObject({ ...circuit.wires[0], fromPosition: { x: 30, y: 0 }, toPosition: { x: 130, y: 100 } });
     expect(updateComponent(moved, 'r1', { label: '', value: '<literal & text>' }).components[0])
       .toMatchObject({ label: '', value: '<literal & text>', id: 'r1', x: 20 });
     expect(moveComponent(circuit, 'absent', { x: 0, y: 0 })).toBe(circuit);
@@ -35,7 +35,7 @@ describe('immutable component operations', () => {
     for (const expected of [90, 180, 270, 0]) {
       circuit = rotateSelected(circuit, { type: 'component', id: 'r1' });
       expect(circuit.components[0]?.rotation).toBe(expected);
-      expect(circuit.wires).toEqual(original.wires);
+      expect(circuit.wires[0]?.fromPosition).toEqual({ x: 30, y: 0 });
     }
     expect(original.components[0]?.rotation).toBe(0);
     expect(rotateSelected(circuit, null)).toBe(circuit);

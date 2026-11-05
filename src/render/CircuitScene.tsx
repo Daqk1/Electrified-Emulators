@@ -13,8 +13,8 @@ export function CircuitScene({ circuit, selection = null, wiring = null, variant
   return <>
     <g data-layer="wires">
       {circuit.wires.map((wire) => {
-        const from = getPinAbsolutePosition(circuit, wire.from);
-        const to = getPinAbsolutePosition(circuit, wire.to);
+        const from = wire.fromPosition ?? getPinAbsolutePosition(circuit, wire.from);
+        const to = wire.toPosition ?? getPinAbsolutePosition(circuit, wire.to);
         return from && to ? <Wire key={wire.id} id={wire.id} from={from} to={to} variant={variant}
           selected={selection?.type === 'wire' && selection.id === wire.id} /> : null;
       })}

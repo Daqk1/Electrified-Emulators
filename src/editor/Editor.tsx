@@ -9,7 +9,6 @@ import { useKeyboardShortcuts } from "./useKeyboardShortcuts";
 import { screenToWorld, zoomViewport } from "../core/viewport";
 import { useCircuitCommands } from "./useCircuitCommands";
 import { isComponentType } from "../core/templates";
-import { createDemoCircuit } from "../core/demo";
 import { Inspector } from "./Inspector";
 import { NetlistPanel } from "./NetlistPanel";
 import { StatusBar } from "./StatusBar";
@@ -96,10 +95,10 @@ export function Editor() {
           className="btn btn-primary"
           onClick={() => {
             files.cancelPendingLoad();
-            dispatch({ type: "loadCircuit", circuit: createDemoCircuit() });
+            window.location.href = "/dashboard";
           }}
         >
-          ⚡ Load Demo Circuit
+          Submit
         </button>
         <input
           ref={fileRef}

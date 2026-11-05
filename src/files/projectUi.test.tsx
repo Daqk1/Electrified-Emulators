@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from '../App';
 import legacy from '../test/fixtures/legacy-project.json';
 import { downloadJson, downloadPng, downloadSvg } from './downloads';
@@ -7,6 +7,7 @@ import { downloadJson, downloadPng, downloadSvg } from './downloads';
 vi.mock('./downloads', () => ({ downloadJson: vi.fn(), downloadPng: vi.fn().mockResolvedValue(undefined), downloadSvg: vi.fn() }));
 
 describe('project file UI', () => {
+  beforeEach(() => { window.history.replaceState(null, '', '/editor'); });
   it('loads original JSON, resets the picker for same-file retries, and updates the netlist', async () => {
     render(<App />);
     const input = screen.getByLabelText<HTMLInputElement>('Load circuit JSON');
@@ -37,7 +38,8 @@ describe('project file UI', () => {
   });
   it('wires all download controls to circuit data and surfaces export failures', async () => {
     render(<App />);
-    fireEvent.click(screen.getByRole('button', { name: /Load Demo Circuit/ }));
+    fireEvent.change(screen.getByLabelText('Load circuit JSON'), { target: { files: [new File([JSON.stringify(legacy)], 'circuit.json')] } });
+    await waitFor(() => expect(screen.getByText('Components:')).toHaveTextContent('5'));
     fireEvent.click(screen.getByRole('button', { name: /SVG$/ }));
     fireEvent.click(screen.getByRole('button', { name: /JSON$/ }));
     fireEvent.click(screen.getByRole('button', { name: /PNG$/ }));

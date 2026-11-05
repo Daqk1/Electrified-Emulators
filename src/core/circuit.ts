@@ -1,3 +1,4 @@
+import { getPinAbsolutePosition } from './geometry';
 import { getNextLabel } from './labels';
 import { COMPONENT_TEMPLATES } from './templates';
 import type { CircuitComponent, CircuitState, CircuitWire, ComponentType, PinRef, Point, Selection } from './types';
@@ -5,7 +6,10 @@ import type { CircuitComponent, CircuitState, CircuitWire, ComponentType, PinRef
 export function cloneCircuit(circuit: CircuitState): CircuitState {
   return {
     components: circuit.components.map((component) => ({ ...component })),
-    wires: circuit.wires.map((wire) => ({ ...wire, from: { ...wire.from }, to: { ...wire.to } })),
+    wires: circuit.wires.map((wire) => ({ ...wire, from: { ...wire.from }, to: { ...wire.to },
+      ...(wire.fromPosition ? { fromPosition: { ...wire.fromPosition } } : {}),
+      ...(wire.toPosition ? { toPosition: { ...wire.toPosition } } : {}),
+    })),
   };
 }
 
@@ -30,10 +34,21 @@ export function addComponent(circuit: CircuitState, component: CircuitComponent)
   return { ...circuit, components: [...circuit.components, { ...component }] };
 }
 
+// Capture endpoints before any component transform so completed wires stay fixed.
+function fixWirePositions(circuit: CircuitState): CircuitWire[] {
+  return circuit.wires.map((wire) => {
+    const fromPosition = wire.fromPosition ?? getPinAbsolutePosition(circuit, wire.from);
+    const toPosition = wire.toPosition ?? getPinAbsolutePosition(circuit, wire.to);
+    if (wire.fromPosition && wire.toPosition) return wire;
+    return fromPosition && toPosition ? { ...wire, fromPosition, toPosition } : wire;
+  });
+}
+
 export function moveComponent(circuit: CircuitState, id: string, position: Point): CircuitState {
   if (!circuit.components.some((component) => component.id === id)) return circuit;
   return {
     ...circuit,
+    wires: fixWirePositions(circuit),
     components: circuit.components.map((component) => component.id === id
       ? { ...component, x: position.x, y: position.y } : component),
   };
@@ -55,6 +70,7 @@ export function rotateSelected(circuit: CircuitState, selection: Selection): Cir
   if (!component) return circuit;
   return {
     ...circuit,
+    wires: fixWirePositions(circuit),
     components: circuit.components.map((part) => part.id === component.id
       ? { ...part, rotation: (part.rotation + 90) % 360 } : part),
   };

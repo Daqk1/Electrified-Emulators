@@ -39,7 +39,7 @@ export type CircuitComponent = {
 };
 
 export type PinRef = { compId: string; pinId: string };
-export type CircuitWire = { id: string; from: PinRef; to: PinRef };
+export type CircuitWire = { id: string; from: PinRef; to: PinRef; fromPosition?: Point; toPosition?: Point };
 export type CircuitState = {
   components: CircuitComponent[];
   wires: CircuitWire[];

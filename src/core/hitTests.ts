@@ -27,8 +27,8 @@ export function findComponentAtWorldPos(circuit: CircuitState, point: Point): Ci
 
 export function findWireAtWorldPos(circuit: CircuitState, point: Point, threshold = 8): CircuitWire | null {
   for (const wire of circuit.wires) {
-    const from = getPinAbsolutePosition(circuit, wire.from);
-    const to = getPinAbsolutePosition(circuit, wire.to);
+    const from = wire.fromPosition ?? getPinAbsolutePosition(circuit, wire.from);
+    const to = wire.toPosition ?? getPinAbsolutePosition(circuit, wire.to);
     if (!from || !to) continue;
     const [p1, p2, p3, p4] = wireRoute(from, to);
     if (distToSegment(point, p1, p2) < threshold

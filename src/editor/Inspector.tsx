@@ -22,8 +22,6 @@ export function Inspector() {
     <div className="form-group">
       <span className="form-label">Rotation</span>
       <div className="property-row"><span className="prop-label">Angle:</span><span className="prop-value">{part.rotation}°</span></div>
-      <button type="button" className="btn inspector-rotate" aria-label="Rotate component 90 degrees"
-        onClick={() => dispatch({ type: 'rotateSelected', selection: { type: 'component', id: part.id } })}>↻ Rotate 90°</button>
     </div>
     <div className="form-group">
       <span className="form-label">Position</span>
