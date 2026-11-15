@@ -31,7 +31,11 @@ body {
   font-family: "Moonbright Demo";
   src: url("/MoonbrightDemo.ttf") format("truetype");
 }
-
+.login-logo {
+  width: 300px;
+  height: auto;
+  object-fit: contain;
+}
 /* Zoomable grid background */
 .grid-stage {
   position: absolute;
@@ -50,7 +54,7 @@ body {
   z-index: 2;
   pointer-events: none;
 }
-.header-stage{
+.header-stage {
   position: absolute;
   top: 0;
   left: 10;
@@ -92,4 +96,68 @@ body {
   width: 300px;
   height: 50px;
   font-size: 18px;
+}
+.course-card {
+  border: none;
+}
+
+.course-card:hover {
+  border: none;
+}
+.assignment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  border-bottom: 3px solid #4da9c5;
+  padding-bottom: 16px;
+  margin: 30px 32px 24px;
+}
+.courseHeader h2 {
+  font-family: Arial, sans-serif;
+  font-size: 27px;
+  font-weight: bold;
+  color: #e5ebef;
+
+  margin: 0 32px 24px;
+  margin-left: 100px;
+  margin-top: 20px; /* Moves heading down */
+  padding-bottom: 16px;
+
+  border-bottom: 3px solid #9e9ea8;
+}
+.PersonalProject h2{
+  font-family: Arial, sans-serif;
+  font-size: 27px;
+  font-weight: bold;
+  color: #e5ebef;
+
+  margin: 0 32px 24px;
+  margin-left: 100px;
+  margin-top: 30px; /* Moves heading down */
+  padding-bottom: 16px;
+
+  border-bottom: 3px solid #9e9ea8;
+} .PersonalProject {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.PersonalProject svg {
+  display: block;
+  max-width: 100%;
+}
+.courseHeader {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.course-container {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.course-container svg {
+  display: block;
+  max-width: 100%;
 }

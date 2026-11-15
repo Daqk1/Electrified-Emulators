@@ -1,58 +1,65 @@
-import { useEffect, useRef, useState } from "react";
+import {  useEffect, useRef, useState } from "react";
 import { SVG, type Svg } from "@svgdotjs/svg.js";
 
 // Assignment data type
 interface Assignment {
-  assignment_id?: number;
-  name: string;
-  description?: string;
-  due_at?: string;
-  points_possible?: number;
-  course_id?: number;
+  userId: number;
+  courseId: number;
+  assignmentId: number;
+  assignmentName: string;
+  description: string;
+  dueAt: string;
+  pointsPossible: number;
 }
 
-export default function AssignmentList() {
+export default function Assignment({ userId, courseId }: { userId: number; courseId: number }) {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [error, setError] = useState<string>("");
+  
 
   const svgRef = useRef<HTMLDivElement>(null);
   function handleClick(assignment: Assignment) {
     const params = new URLSearchParams({
-      assignmentId: String(assignment.assignment_id),
-      assignmentName: assignment.name,
+      assignmentId: String(assignment.assignmentId),
+      assignmentName: assignment.assignmentName,
     });
 
     window.location.href = `/editor?${params.toString()}`;
   }
   // Load assignments from backend
   useEffect(() => {
-    const controller = new AbortController();
+  const controller = new AbortController();
 
-    async function loadAssignments() {
-      try {
-        const response = await fetch("http://localhost:5001/assignments", {
-          signal: controller.signal,
-        });
+  async function loadAssignments() {
+    try {
+      const response = await fetch(
+        `http://localhost:5001/api/assignments/${userId}/${courseId}`,
+        { signal: controller.signal }
+      );
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch assignments");
-        }
+      if (!response.ok) {
+        throw new Error("Failed to fetch assignments");
+      }
 
-        const data: Assignment[] = await response.json();
+      const data: Assignment[] = await response.json();
 
-        setAssignments(data);
-      } catch (error) {
-        if (!controller.signal.aborted) {
-          console.error("Error loading assignments:", error);
-          setError("Unable to load assignments");
-        }
+      setAssignments(data);
+      setError("");
+
+      console.log("Assignments:", data);
+
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        console.error("Error loading assignments:", error);
+        setError("Unable to load assignments");
       }
     }
+  }
 
-    loadAssignments();
+  loadAssignments();
 
-    return () => controller.abort();
-  }, []);
+  return () => controller.abort();
+}, [userId, courseId]);
 
   // Draw checkbox
   function checkBox(draw: Svg, x: number, y: number): void {
@@ -118,7 +125,7 @@ export default function AssignmentList() {
 
         checkBox(draw, 250, y + 5);
 
-        assignment_box(draw, 300, y, assignment.name, () =>
+        assignment_box(draw, 300, y, assignment.assignmentName, () =>
           handleClick(assignment),
         );
       });

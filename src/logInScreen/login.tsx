@@ -18,7 +18,7 @@ function Login() {
   async function userSearch(
     username: string,
     password: string,
-  ): Promise<{ id: number; username: string } | null> {
+  ): Promise<{ valid: boolean; userId: number | undefined }> {
     const response = await fetch("http://localhost:5001/api/login", {
       method: "POST",
       headers: {
@@ -29,53 +29,74 @@ function Login() {
         password,
       }),
     });
+    const data=  await response.json();
 
-    if (!response.ok) return null;
+if (!response.ok) {
+  return {
+    valid: false,
+    userId: undefined,
+  };
+}
 
-    const data = (await response.json()) as {
-      user?: { id?: number; username?: string };
-    };
 
-    if (typeof data.user?.id !== "number" || typeof data.user.username !== "string") {
-      return null;
-    }
-
-    return { id: data.user.id, username: data.user.username };
+return {
+  valid: response.ok && typeof data.userId === "number",
+  userId: typeof data.userId === "number" ? data.userId : undefined,
+};
   }
 
   // Handle login button
   async function handleSubmit(
-    event: SubmitEvent<HTMLFormElement>,
-  ): Promise<void> {
-    event.preventDefault();
+  event: SubmitEvent<HTMLFormElement>,
+): Promise<void> {
+  event.preventDefault();
 
-    setError("");
-    setMessage("");
-    setLoading(true);
+  setError("");
+  setMessage("");
+  setLoading(true);
 
-    try {
-      const user = await userSearch(username, password);
+  try {
+    const data = await userSearch(username, password);
 
-      if (user) {
-        localStorage.setItem("userId", String(user.id));
-        localStorage.setItem("username", user.username);
-        console.log("Login successful!");
-        window.location.href = "/dashboard";
+    if (data.valid && data.userId !== undefined) {
+      const userId = data.userId;
 
-        // Navigate to Dashboard after successful login
-      } else {
-        setError("Invalid username or password");
-      }
-    } catch (error) {
-      console.error("Login error:", error);
-      setError("Cannot connect to backennd server");
-    } finally {
-      setLoading(false);
+      console.log("Login successful!");
+      console.log("User ID:", userId);
+
+      sessionStorage.setItem("userId", String(userId));
+
+      // Preserve username storage
+      localStorage.setItem("username", username);
+
+      // Keep the numeric ID available to circuit persistence
+      localStorage.setItem("userId", String(userId));
+
+      window.location.href = "/dashboard";
+    } else {
+      setError("Invalid username or password");
     }
+  } catch (error) {
+    console.error("Login error:", error);
+    setError("Cannot connect to backend server");
+  } finally {
+    setLoading(false);
   }
+}
 
   return (
+
     <div className="login-container">
+      <img
+  src="/CircuitEDU.png"
+  alt="CircuitEDU Logo"
+  style={{
+    width: "400px",
+    height: "auto",
+    display: "block",
+    margin: "0 auto",
+  }}
+/>
       <div ref={svgRef}></div>
 
       <form className="login-form" onSubmit={handleSubmit}>
