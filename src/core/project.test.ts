@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import legacy from '../test/fixtures/legacy-project.json';
 import { deepFreeze, part, circuitWithRoute } from '../test/coreHelpers';
+import { moveComponent } from './circuit';
 import { createDemoCircuit } from './demo';
 import { parseProject, ProjectFormatError, serializeProject, validateProject } from './project';
 import { COMPONENT_TEMPLATES } from './templates';
@@ -15,6 +16,13 @@ describe('legacy project compatibility', () => {
     const saved = serializeProject(deepFreeze(loaded), legacy.timestamp);
     expect(saved).toBe(raw);
     expect(parseProject(saved)).toEqual(loaded);
+  });
+  it('preserves fixed wire coordinates through saving and loading', () => {
+    const moved = moveComponent(circuitWithRoute(), 'r1', { x: 500, y: 500 });
+    expect(parseProject(serializeProject(moved, 'now'))).toEqual(moved);
+    for (const fromPosition of [{ x: NaN, y: 0 }, { x: 0, y: 'bad' }, null]) {
+      expect(() => validateProject({ ...moved, wires: [{ ...moved.wires[0], fromPosition }] })).toThrow(ProjectFormatError);
+    }
   });
   it('accepts metadata-free files, all ten types, arbitrary finite rotations and unsnapped positions', () => {
     const components = Object.values(COMPONENT_TEMPLATES).map((template, index) => part({

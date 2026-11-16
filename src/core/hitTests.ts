@@ -1,4 +1,11 @@
-import { distToSegment, getPinAbsolutePosition, rotatePoint, snap, wireRoute } from './geometry';
+import {
+  distToSegment,
+  getPinAbsolutePosition,
+  getWireObstacles,
+  rotatePoint,
+  snap,
+  wireRoute,
+} from './geometry';
 import { COMPONENT_TEMPLATES } from './templates';
 import type { CircuitComponent, CircuitState, CircuitWire, PinRef, Point } from './types';
 
@@ -30,7 +37,9 @@ export function findWireAtWorldPos(circuit: CircuitState, point: Point, threshol
     const from = getPinAbsolutePosition(circuit, wire.from);
     const to = getPinAbsolutePosition(circuit, wire.to);
     if (!from || !to) continue;
-    const [p1, p2, p3, p4] = wireRoute(from, to);
+    const obstacles = getWireObstacles(circuit);
+    const route = wireRoute(from, to, obstacles);
+    const [p1, p2, p3, p4] = route;
     if (distToSegment(point, p1, p2) < threshold
       || distToSegment(point, p2, p3) < threshold
       || distToSegment(point, p3, p4) < threshold) return wire;

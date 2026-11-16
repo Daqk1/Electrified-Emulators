@@ -5,7 +5,10 @@ import type { CircuitComponent, CircuitState, CircuitWire, ComponentType, PinRef
 export function cloneCircuit(circuit: CircuitState): CircuitState {
   return {
     components: circuit.components.map((component) => ({ ...component })),
-    wires: circuit.wires.map((wire) => ({ ...wire, from: { ...wire.from }, to: { ...wire.to } })),
+    wires: circuit.wires.map((wire) => ({ ...wire, from: { ...wire.from }, to: { ...wire.to },
+      ...(wire.fromPosition ? { fromPosition: { ...wire.fromPosition } } : {}),
+      ...(wire.toPosition ? { toPosition: { ...wire.toPosition } } : {}),
+    })),
   };
 }
 

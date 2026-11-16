@@ -1,6 +1,6 @@
 import { addWire } from './circuit';
 import { isComponentType } from './templates';
-import type { CircuitComponent, CircuitState, CircuitWire, PinRef, ProjectFile } from './types';
+import type { CircuitComponent, CircuitState, CircuitWire, PinRef, Point, ProjectFile } from './types';
 
 export class ProjectFormatError extends Error {
   constructor(message: string) { super(message); this.name = 'ProjectFormatError'; }
@@ -30,6 +30,11 @@ function finite(value: unknown, path: string): number {
 function parsePin(value: unknown, path: string): PinRef {
   const pin = record(value, path);
   return { compId: text(pin.compId, `${path}.compId`, true), pinId: text(pin.pinId, `${path}.pinId`, true) };
+}
+
+function parsePoint(value: unknown, path: string): Point {
+  const point = record(value, path);
+  return { x: finite(point.x, `${path}.x`), y: finite(point.y, `${path}.y`) };
 }
 
 // Accept the old envelope or metadata-free legacy data; return only circuit fields.
@@ -71,6 +76,8 @@ export function validateProject(value: unknown): CircuitState {
     const wire: CircuitWire = {
       id: uniqueId(data.id, `${path}.id`),
       from: parsePin(data.from, `${path}.from`), to: parsePin(data.to, `${path}.to`),
+      ...(data.fromPosition !== undefined ? { fromPosition: parsePoint(data.fromPosition, `${path}.fromPosition`) } : {}),
+      ...(data.toPosition !== undefined ? { toPosition: parsePoint(data.toPosition, `${path}.toPosition`) } : {}),
     };
     const next = addWire(circuit, wire);
     if (next === circuit) {

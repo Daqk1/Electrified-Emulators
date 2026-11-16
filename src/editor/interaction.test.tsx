@@ -142,6 +142,24 @@ describe('wiring interactions', () => {
     click(690, 352);
     expect(svg.querySelectorAll('.circuit-wire')).toHaveLength(1);
   });
+  it('keeps a completed wire fixed while either component moves or rotates, with selection at the original route', () => {
+    const previousPath = window.location.pathname;
+    window.history.replaceState(null, '', '/editor');
+    const { svg, click } = wireSetup();
+    window.history.replaceState(null, '', previousPath);
+    click(690, 352); click(830, 452);
+    fireEvent.click(screen.getByRole('button', { name: 'Select' }));
+    const path = svg.querySelector('.circuit-wire')!.getAttribute('d');
+    for (const [x, y] of [[660, 352], [860, 452]] as const) {
+      fireEvent.pointerDown(svg, { ...primary, button: 0, clientX: x, clientY: y });
+      fireEvent.pointerMove(svg, { ...primary, clientX: x + 100, clientY: y + 100 });
+      fireEvent.pointerUp(svg, primary);
+      fireEvent.keyDown(window, { key: 'r' });
+      expect(svg.querySelector('.circuit-wire')).toHaveAttribute('d', path);
+    }
+    click(760, 402);
+    expect(svg.querySelector('.circuit-wire')).toHaveClass('selected');
+  });
   it('cancels on same pin, empty space, Escape and tool changes', () => {
     const { svg, click } = wireSetup();
     for (const cancel of [() => click(690, 352), () => click(1000, 600),
@@ -167,7 +185,7 @@ describe('wiring interactions', () => {
 });
 
 describe('inspector and netlist', () => {
-  it('edits label/value without shortcuts firing, updates SVG and netlist, and rotates in the inspector', () => {
+  it('edits label/value without shortcuts firing, updates SVG and netlist, and rotates by shortcut', () => {
     const { svg } = setup();
     fireEvent.click(screen.getByRole('button', { name: 'Resistor (R)' }));
     const label = screen.getByRole('textbox', { name: 'Identifier / Label' });
@@ -177,7 +195,7 @@ describe('inspector and netlist', () => {
     fireEvent.keyDown(value, { key: 'r' });
     expect(svg.querySelector('.circuit-comp')?.textContent).toBe('LOAD220Ω');
     expect(svg.querySelector('.circuit-comp')?.firstElementChild).toHaveAttribute('transform', 'rotate(0)');
-    fireEvent.click(screen.getByRole('button', { name: 'Rotate component 90 degrees' }));
+    fireEvent.keyDown(window, { key: 'r' });
     expect(screen.getByText('90°')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('tab', { name: 'Netlist / Nodes' }));
     expect(screen.getByLabelText('Circuit netlist')).toHaveTextContent('LOAD N001 N002 220Ω');
