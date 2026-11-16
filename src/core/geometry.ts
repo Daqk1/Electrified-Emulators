@@ -1,5 +1,5 @@
 import { COMPONENT_TEMPLATES } from './templates';
-import type { CircuitState, PinRef, Point } from './types';
+import type { CircuitState, ComponentType, PinRef, Point } from './types';
 
 export function snap(value: number, enabled = true, gridSize = 20): number {
   return enabled ? Math.round(value / gridSize) * gridSize : value;
@@ -23,6 +23,19 @@ export function getPinAbsolutePosition(circuit: CircuitState, ref: PinRef): Poin
 
 export type WireObstacle = { left: number; top: number; right: number; bottom: number };
 export type WireRoute = [Point, Point, Point, Point];
+
+const COMPONENT_BODY_BOUNDS: Record<ComponentType, WireObstacle> = {
+  resistor: { left: -20, top: -11, right: 20, bottom: 11 },
+  capacitor: { left: -9, top: -15, right: 9, bottom: 15 },
+  inductor: { left: -20, top: -9, right: 20, bottom: 9 },
+  switch: { left: -14, top: -12, right: 14, bottom: 3 },
+  led: { left: -12, top: -12, right: 12, bottom: 12 },
+  diode: { left: -12, top: -12, right: 12, bottom: 12 },
+  dc_source: { left: -17, top: -17, right: 17, bottom: 17 },
+  ground: { left: -16, top: -12, right: 16, bottom: 18 },
+  and_gate: { left: -18, top: -16, right: 16, bottom: 16 },
+  or_gate: { left: -18, top: -16, right: 16, bottom: 16 },
+};
 
 function samePoint(a: Point, b: Point): boolean {
   return a.x === b.x && a.y === b.y;
@@ -51,17 +64,21 @@ function routeClear(route: readonly Point[], obstacles: readonly WireObstacle[])
 export function getWireObstacles(circuit: CircuitState): WireObstacle[] {
   return circuit.components
     .map((component) => {
-      const template = COMPONENT_TEMPLATES[component.type];
+      const body = COMPONENT_BODY_BOUNDS[component.type];
       const radians = component.rotation * Math.PI / 180;
       const cos = Math.abs(Math.cos(radians));
       const sin = Math.abs(Math.sin(radians));
-      const halfWidth = (template.width * cos + template.height * sin) / 2;
-      const halfHeight = (template.width * sin + template.height * cos) / 2;
+      const halfWidth = ((body.right - body.left) * cos + (body.bottom - body.top) * sin) / 2;
+      const halfHeight = ((body.right - body.left) * sin + (body.bottom - body.top) * cos) / 2;
+      const centerOffset = rotatePoint({
+        x: (body.left + body.right) / 2,
+        y: (body.top + body.bottom) / 2,
+      }, component.rotation);
       return {
-        left: component.x - halfWidth,
-        top: component.y - halfHeight,
-        right: component.x + halfWidth,
-        bottom: component.y + halfHeight,
+        left: component.x + centerOffset.x - halfWidth,
+        top: component.y + centerOffset.y - halfHeight,
+        right: component.x + centerOffset.x + halfWidth,
+        bottom: component.y + centerOffset.y + halfHeight,
       };
     });
 }
@@ -83,8 +100,32 @@ export function wireRoute(
     ...xCandidates.map((x) => [from, { x, y: from.y }, { x, y: to.y }, to] as [Point, Point, Point, Point]),
     ...yCandidates.map((y) => [from, { x: from.x, y }, { x: to.x, y }, to] as [Point, Point, Point, Point]),
   ].filter((route) => routeClear(route, obstacles));
-  return candidates.sort((a, b) => routeLength(a) - routeLength(b))[0]
-    ?? [from, { x: (from.x + to.x) / 2, y: from.y }, { x: (from.x + to.x) / 2, y: to.y }, to];
+  const simpleRoute = candidates.sort((a, b) => routeLength(a) - routeLength(b))[0];
+  if (simpleRoute) return simpleRoute;
+
+  const clearance = 12;
+  const detourCandidates = [
+    ...obstacles.flatMap((obstacle) => [
+      [from, { x: obstacle.left - clearance, y: from.y }, { x: obstacle.left - clearance, y: to.y }, to],
+      [from, { x: obstacle.right + clearance, y: from.y }, { x: obstacle.right + clearance, y: to.y }, to],
+      [from, { x: from.x, y: obstacle.top - clearance }, { x: to.x, y: obstacle.top - clearance }, to],
+      [from, { x: from.x, y: obstacle.bottom + clearance }, { x: to.x, y: obstacle.bottom + clearance }, to],
+    ] as [Point, Point, Point, Point][]),
+  ].filter((route) => routeClear(route, obstacles));
+  const detour = detourCandidates.sort((a, b) => routeLength(a) - routeLength(b))[0];
+  if (detour) return detour;
+
+  const minX = Math.min(from.x, to.x, ...obstacles.map((obstacle) => obstacle.left));
+  const maxX = Math.max(from.x, to.x, ...obstacles.map((obstacle) => obstacle.right));
+  const minY = Math.min(from.y, to.y, ...obstacles.map((obstacle) => obstacle.top));
+  const maxY = Math.max(from.y, to.y, ...obstacles.map((obstacle) => obstacle.bottom));
+  const outerRoutes: WireRoute[] = [
+    [from, { x: minX - clearance, y: from.y }, { x: minX - clearance, y: to.y }, to],
+    [from, { x: maxX + clearance, y: from.y }, { x: maxX + clearance, y: to.y }, to],
+    [from, { x: from.x, y: minY - clearance }, { x: to.x, y: minY - clearance }, to],
+    [from, { x: from.x, y: maxY + clearance }, { x: to.x, y: maxY + clearance }, to],
+  ];
+  return outerRoutes.find((route) => routeClear(route, obstacles)) ?? outerRoutes[0]!;
 }
 
 function routeLength(route: readonly Point[]): number {
