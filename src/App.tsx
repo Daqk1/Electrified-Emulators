@@ -4,7 +4,9 @@ import Login from "./logInScreen/login";
 import Assignment from "./DashBoard/AssignmentSection";
 import { Editor } from "./editor/Editor";
 import { EditorProvider } from "./state/EditorProvider";
-
+import TeacherDashboard from "./DashBoard/TeacherDashBoard";
+import TeacherAssignment from "./DashBoard/TeacherCourse";
+import AssignmentGrade from "./DashBoard/AssignmentGrade";
 export function App() {
   const path = window.location.pathname;
   console.log("Current path:", path);
@@ -28,6 +30,19 @@ export function App() {
     console.log("Course ID:", courseId);
 
     return <Assignment userId={userId} courseId={courseId} />;
+  }
+  if (path.startsWith("/teacher-Assignment/")) {
+    const courseId = Number(path.split("/")[2]);
+    const userId = Number(sessionStorage.getItem("userId"));
+    return <TeacherAssignment userId={userId} courseId={courseId}/>;
+  }
+ if (path.startsWith("/assignment-grade/")) {
+  const assignmentId = Number(path.split("/")[2]);
+
+  return <AssignmentGrade assignmentId={assignmentId} />;
+}
+  if (path === "/teacher-dashboard") {
+    return <TeacherDashboard/>;
   }
   return <Login />;
 }

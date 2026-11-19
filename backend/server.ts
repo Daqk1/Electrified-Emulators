@@ -195,7 +195,7 @@ app.put("/api/circuits", async (req, res) => {
     return res.status(500).json({ message: "Failed to save circuit" });
   }
 });
-
+// Handle login requests
 app.post("/api/login", async (req, res) => {
   console.log("Login request recieved");
   try {
@@ -244,26 +244,40 @@ app.post("/api/login", async (req, res) => {
     });
   }
 });
-
-app.get("/api/courses/:userId", async (req, res) => {
+// Load courses for a user
+app.get("/api/courses/:userId/:role", async (req, res) => {
   console.log("COURSE API CALLED!");
   console.log("User ID:", req.params.userId);
   try {
     const userId = Number(req.params.userId);
+    const role = req.params.role;
 
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(400).json({
+        message: "Invalid user ID",
+      });
+    }
+
+    if (role !== "student" && role !== "teacher") {
+      return res.status(400).json({
+        message: "Invalid role",
+      });
+    } 
+    const enrollmentRole = role === "teacher" ? "TeacherEnrollment" : "StudentEnrollment";
+    
     const enrollments = await Enrollment.find({
       userId: userId,
-      role: "StudentEnrollment",
+      role: enrollmentRole,
     });
 
     const courseIds = enrollments.map((enrollment) => enrollment.courseId);
 
     const courses = await Course.find({ CourseId: { $in: courseIds } });
-    console.log("Course collection:", Course.collection.name);
     console.log("Total courses:", await Course.countDocuments());
     console.log("Course IDs to search:", courseIds);
+    console.log("Role:", enrollmentRole);
+
     res.json(courses);
-    console.log("Student courses:", courses);
   } catch (error) {
     console.error("Error fetching courses:", error);
 
@@ -272,7 +286,57 @@ app.get("/api/courses/:userId", async (req, res) => {
     });
   }
 });
+// load assigment for teacher
+app.get("/api/teacher-assignments/:courseId", async (req, res) => {
+  try {
+    const courseId = Number(req.params.courseId);
 
+    if (!Number.isInteger(courseId)) {
+      return res.status(400).json({
+        message: "Invalid course ID",
+      });
+    }
+
+    const assignments = await Assignment.find({
+      courseId: courseId,
+    });
+
+    res.json(assignments);
+  } catch (error) {
+    console.error("Error fetching assignments:", error);
+
+    res.status(500).json({
+      message: "Failed to fetch assignments",
+    });
+  }
+});
+//Acess the assignment teacher pov
+
+app.get("/api/assignment-data/:assignmentId",async(req,res)=>{
+try {
+    const assignmentId = Number(req.params.assignmentId);
+   
+    if (!Number.isInteger(assignmentId)) {
+      return res.status(400).json({
+        message: "Invalid assignment ID",
+      });
+    }
+
+    const assignments = await Assignment.find({
+      assignmentId: assignmentId,
+    
+    });
+    console.log("Assignments found:", assignments);
+
+    res.json(assignments);
+  } catch (error) {
+    console.error("Error fetching assignments:", error);
+
+    res.status(500).json({
+      message: "Failed to fetch assignments",
+    });
+  }
+} );
 // Connect MongoDB and start server
 async function startServer() {
   try {

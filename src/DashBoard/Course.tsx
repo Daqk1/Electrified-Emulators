@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { SVG } from "@svgdotjs/svg.js";
 
@@ -7,7 +6,12 @@ interface Course {
   courseCode: string;
 }
 
-export default function CourseList({ userId }: { userId: number }) {
+interface CourseListProps {
+  userId: number;
+  role: "teacher" | "student";
+}
+
+export default function CourseList({ userId, role }: CourseListProps) {
   const [courses, setCourses] = useState<Course[]>([]);
   const svgRef = useRef<HTMLDivElement>(null);
 
@@ -22,8 +26,8 @@ export default function CourseList({ userId }: { userId: number }) {
     async function getUserCourses() {
       try {
         const response = await fetch(
-          `http://localhost:5001/api/courses/${userId}`,
-          { signal: controller.signal }
+          `http://localhost:5001/api/courses/${userId}/${role}`,
+          { signal: controller.signal },
         );
 
         if (!response.ok) {
@@ -33,6 +37,7 @@ export default function CourseList({ userId }: { userId: number }) {
         const data: Course[] = await response.json();
 
         setCourses(data);
+        console.log("User role:", role);
         console.log("User courses:", data);
       } catch (error) {
         if (!controller.signal.aborted) {
@@ -42,13 +47,18 @@ export default function CourseList({ userId }: { userId: number }) {
     }
 
     getUserCourses();
-
+  
     return () => controller.abort();
-  }, [userId]);
+  }, [userId, role]);
 
   function handleClick(course: Course) {
     console.log("Clicked course:", course);
-    window.location.href = `/assignments/${course.CourseId}`;
+    if (role == "student") {
+      window.location.href = `/assignments/${course.CourseId}`;
+    }
+    if (role == "teacher") {
+      window.location.href = `/teacher-Assignment/${course.CourseId}`;
+    }
   }
 
   useEffect(() => {
@@ -73,19 +83,15 @@ export default function CourseList({ userId }: { userId: number }) {
         1,
         Math.min(
           courses.length || 1,
-          Math.floor((width - padding * 2 + gap) / (boxWidth + gap))
-        )
+          Math.floor((width - padding * 2 + gap) / (boxWidth + gap)),
+        ),
       );
 
       const rows = Math.ceil(courses.length / columns);
-      const height = Math.max(
-        200,
-        rows * (boxHeight + gap) + 40
-      );
 
-      const draw = SVG()
-        .addTo(container)
-        .size(width, height);
+      const height = Math.max(200, rows * (boxHeight + gap) + 40);
+
+      const draw = SVG().addTo(container).size(width, height);
 
       draw.rect(width, height).fill("#1e1e24");
 
@@ -101,13 +107,9 @@ export default function CourseList({ userId }: { userId: number }) {
         const row = Math.floor(index / columns);
         const column = index % columns;
 
-        const itemsInRow = Math.min(
-          columns,
-          courses.length - row * columns
-        );
+        const itemsInRow = Math.min(columns, courses.length - row * columns);
 
-        const rowWidth =
-          itemsInRow * boxWidth + (itemsInRow - 1) * gap;
+        const rowWidth = itemsInRow * boxWidth + (itemsInRow - 1) * gap;
 
         const startX = (width - rowWidth) / 2;
 
