@@ -123,7 +123,7 @@ export default function AssignmentGrade({
 
       draw
         .text("View")
-        .move(width * 0.90, 20)
+        .move(width * 0.9, 20)
         .font({
           size: 16,
           family: "Arial",
@@ -195,7 +195,7 @@ export default function AssignmentGrade({
 
         const view = group
           .text("View")
-          .move(width * 0.90, y + 25)
+          .move(width * 0.9, y + 25)
           .font({
             size: 15,
             family: "Arial",

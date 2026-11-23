@@ -1,4 +1,3 @@
-import { useId, useRef } from "react";
 import type { Tool } from "../core/types";
 import { useEditor } from "../state/EditorProvider";
 import { Canvas } from "./Canvas";
@@ -15,6 +14,8 @@ import { StatusBar } from "./StatusBar";
 import { Modal } from "./Modal";
 import { useProjectFiles } from "../files/useProjectFiles";
 import { useCircuitPersistence } from "./useCircuitPersistence";
+import { useId, useRef, useState } from "react";
+
 const toolAppearance: Record<
   Tool,
   { text: string; color: string; cursor: string }
@@ -30,35 +31,53 @@ const toolAppearance: Record<
 
 // The editor composes UI and browser I/O; rendering and circuit math stay separate.
 export function Editor() {
+ 
   const { circuit, editor, dispatch, getSnapshot } = useEditor();
+
+  // Get user ID
   const storedUserId = localStorage.getItem("userId");
   const userId = storedUserId ? Number(storedUserId) : undefined;
+
+  // Get assignment ID from URL
+  const params = new URLSearchParams(window.location.search);
+  const storedAssignmentId = params.get("assignmentId");
+
+  const assignmentId = storedAssignmentId
+    ? Number(storedAssignmentId)
+    : undefined;
+
   const svgRef = useRef<SVGSVGElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const files = useProjectFiles();
   const tabId = useId();
   const pointer = useCanvasPointer(svgRef);
   const { placePart } = useCircuitCommands();
+
   const { persistenceEnabled, saveStatus } = useCircuitPersistence(
     circuit,
     dispatch,
-    userId !== undefined && Number.isFinite(userId) ? userId : undefined,
+    userId !== undefined && Number.isFinite(userId)
+      ? userId
+      : undefined,
   );
-  useKeyboardShortcuts();
-  const tool = toolAppearance[editor.tool];
 
+  useKeyboardShortcuts();
+
+  const tool = toolAppearance[editor.tool];
+  const [submitting, setSubmitting] = useState(false);
   return (
     <>
       <header>
         <div className="brand">
-          <div className="brand-icon" aria-hidden="true"  onClick={() => (window.location.href = "/dashboard")}>
+          <div
+            className="brand-icon"
+            aria-hidden="true"
+            onClick={() => (window.location.href = "/dashboard")}
+          >
             ⚡
           </div>
           <h1 className="brand-title">CircuitEDU</h1>
-          <span
-            className="brand-badge">
-            Prototype v1.0
-          </span>
+          <span className="brand-badge">Prototype v1.0</span>
           {persistenceEnabled && (
             <span
               className={`autosave-status autosave-status-${saveStatus}`}
@@ -91,15 +110,35 @@ export function Editor() {
           }}
         />
         <button
-          type="button"
-          className="btn btn-primary"
-          onClick={() => {
-            files.cancelPendingLoad();
-            window.location.href = "/dashboard";
-          }}
-        >
-          Submit
-        </button>
+  type="button"
+    className="btn btn-primary"
+    disabled={submitting}
+    onClick={async () => {
+    if (assignmentId === undefined || userId === undefined) {
+      console.error("Missing assignmentId or userId");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+
+      console.log("Submitting:", {
+        assignmentId,
+        userId,
+      });
+
+      await updateAssignment(assignmentId, userId);
+
+      files.cancelPendingLoad();
+      window.location.href = "/dashboard";
+    } catch (error) {
+      console.error("Submit failed:", error);
+      setSubmitting(false);
+    }
+  }}
+>
+  {submitting ? "Submitting..." : "Submit"}
+</button>
         <input
           ref={fileRef}
           type="file"
@@ -210,4 +249,28 @@ export function Editor() {
       <Modal />
     </>
   );
+}
+
+
+async function updateAssignment(
+  assignmentId: number,
+  userId: number
+) {
+  const response = await fetch(
+    `http://localhost:5001/api/submissions/${assignmentId}/${userId}/status`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const data = await response.json();
+    console.error("Server response:", data);
+    throw new Error("Failed to update assignment");
+  }
+
+  return response.json();
 }
