@@ -1,44 +1,58 @@
-import { useEffect, useRef, useState } from "react";
-import { SVG, type Svg } from "@svgdotjs/svg.js";
 
-// Define Personal Project data type
+import { useEffect, useRef, useState } from "react";
+import { SVG } from "@svgdotjs/svg.js";
+
 interface PersonalProject {
-  _id?: string;
-  name?: string;
-  title?: string;
-  description?: string;
-  due_at?: string;
+  _id: string;
+  project_id: number;
+  title: string;
+  userId: number;
+  created_at?: string;
 }
 
-export default function PersonalProjectList() {
+export default function PersonalProjectList({
+  userId,
+}: {
+  userId: number;
+}) {
   const [projects, setProjects] = useState<PersonalProject[]>([]);
   const [error, setError] = useState<string>("");
 
   const svgRef = useRef<HTMLDivElement>(null);
 
-  function handleClick(project:PersonalProject) {
+  function handleClick(project: PersonalProject) {
     if (!project._id) return;
-    window.location.href = `/editor?projectId=${encodeURIComponent(project._id)}`;
+
+    console.log("Clicked project:", project);
+
+    window.location.href = `/editor?projectId=${encodeURIComponent(
+      project._id
+    )}`;
   }
-  // Get personal projects from MongoDB backend
+
   useEffect(() => {
     const controller = new AbortController();
 
     async function loadProjects() {
       try {
+        console.log("Current userId:", userId);
+
         const response = await fetch(
-          "http://localhost:5001/personal-projects",
-          { signal: controller.signal },
+          `http://localhost:5001/api/personal-projects/${userId}`,
+          { signal: controller.signal }
         );
 
         if (!response.ok) {
-          throw new Error("Failed to fetch personal projects");
+          throw new Error(`HTTP error: ${response.status}`);
         }
 
         const data: PersonalProject[] = await response.json();
 
-        console.log("Personal Projects:", data);
-        setProjects(data);
+        if (!controller.signal.aborted) {
+          setProjects(data);
+          setError("");
+          console.log("Projects received:", data);
+        }
       } catch (error) {
         if (!controller.signal.aborted) {
           console.error("Error loading projects:", error);
@@ -47,93 +61,122 @@ export default function PersonalProjectList() {
       }
     }
 
-    loadProjects();
+    if (userId) {
+      loadProjects();
+    } else {
+      setProjects([]);
+    }
 
     return () => controller.abort();
-  }, []);
+  }, [userId]);
 
-  // Personal project box function
-  function project_box(
-    draw: Svg,
-    x: number,
-    y: number,
-    text: string,
-    handleClick: () => void,
-  ): void {
-    draw.rect(800, 30).move(x, y).fill("#f9fad0").click(handleClick);
-
-    draw
-      .text(text)
-      .move(x + 20, y + 5)
-      .font({
-        size: 14,
-        family: "Arial",
-      })
-       .click(handleClick);
-  }
-
-  // Draw personal projects
   useEffect(() => {
     const container = svgRef.current;
 
     if (!container) return;
 
     function drawProjects() {
-      const width = window.innerWidth;
+      container!.innerHTML = "";
 
-      // Height grows automatically
-      const height = 60 + projects.length * 40;
+      const width = container!.clientWidth;
+      if (width <= 0) return;
 
-      // Clear old SVG
-      if (!container) return;
+      const padding = 30;
+      const rowHeight = 78;
+      const gap = 16;
+      const startY = 55;
+      const cardWidth = Math.max(0, width - padding * 2);
 
-      container.innerHTML = "";
+      const height = Math.max(
+        120,
+        startY + projects.length * (rowHeight + gap) + 20
+      );
 
-      // Create ONE SVG
-      const draw = SVG().addTo(container).size(width, height);
+      const draw = SVG()
+        .addTo(container!)
+        .size(width, height);
 
-      // Personal Projects header
-      draw.rect(width, 30).fill("#ffffff").stroke({
-        color: "#000",
-        width: 1,
-      });
+      draw.rect(width, height).fill("#1e1e24");
 
       draw
-        .text("Personal Projects")
-        .move(width / 2 - 80, 5)
-        .fill("#000")
+        .text("Name")
+        .move(padding + 20, 10)
         .font({
-          size: 24,
+          size: 16,
           family: "Arial",
+          weight: "bold",
+        })
+        .fill("#e5ebef");
+
+      // load the project
+      projects.forEach((project, index) => {
+        const x = padding;
+        const y = startY + index * (rowHeight + gap);
+
+        const projectGroup = draw.group();
+
+        const projectBox = projectGroup
+          .rect(cardWidth, rowHeight)
+          .move(x, y)
+          .fill("#26262e")
+          .stroke({
+            color: "#454550",
+            width: 1,
+          })
+          .radius(12);
+
+        projectGroup
+          .text(project.title || "Untitled Project")
+          .move(x + 20, y + 23)
+          .font({
+            size: 18,
+            family: "Arial",
+            weight: "bold",
+          })
+          .fill("#e5ebef");
+
+        // when the mouse at the project
+        projectGroup.on("mouseenter", () => {
+          projectBox.stroke({
+            color: "#4da9c5",
+            width: 2,
+          });
+        });
+        // 
+        projectGroup.on("mouseleave", () => {
+          projectBox.stroke({
+            color: "#454550",
+            width: 1,
+          });
         });
 
-      // Draw every project
-      projects.forEach((project, index) => {
-        project_box(
-          draw,
-          300,
-          60 + index * 40,
-          project.name ?? project.title ?? "Untitled Project",
-          () => handleClick(project),
-        );
+        projectGroup.click(() => handleClick(project));
+        projectGroup.css("cursor", "pointer");
       });
     }
 
     drawProjects();
 
-    // Redraw when window resizes
-    window.addEventListener("resize", drawProjects);
+    const resizeObserver = new ResizeObserver(drawProjects);
+    resizeObserver.observe(container);
 
     return () => {
-      window.removeEventListener("resize", drawProjects);
+      resizeObserver.disconnect();
       container.innerHTML = "";
     };
   }, [projects]);
 
   return (
-    <div>
-      <div ref={svgRef}></div>
-      {error && <p>{error}</p>}
+    <div className="PersonalProject">
+      <h2>Personal Projects</h2>
+
+      <div ref={svgRef} style={{ width: "100%" }}></div>
+
+      {error && (
+        <p style={{ color: "#ff7777", padding: "0 30px" }}>
+          {error}
+        </p>
+      )}
     </div>
   );
 }

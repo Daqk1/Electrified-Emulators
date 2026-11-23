@@ -31,7 +31,11 @@ body {
   font-family: "Moonbright Demo";
   src: url("/MoonbrightDemo.ttf") format("truetype");
 }
-
+.login-logo {
+  width: 300px;
+  height: auto;
+  object-fit: contain;
+}
 /* Zoomable grid background */
 .grid-stage {
   position: absolute;
@@ -50,7 +54,7 @@ body {
   z-index: 2;
   pointer-events: none;
 }
-.header-stage{
+.header-stage {
   position: absolute;
   top: 0;
   left: 10;
@@ -92,4 +96,234 @@ body {
   width: 300px;
   height: 50px;
   font-size: 18px;
+}
+.course-card {
+  border: none;
+}
+
+.course-card:hover {
+  border: none;
+}
+.assignment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  border-bottom: 3px solid #4da9c5;
+  padding-bottom: 16px;
+  margin: 30px 32px 24px;
+}
+.courseHeader h2 {
+  font-family: Arial, sans-serif;
+  font-size: 27px;
+  font-weight: bold;
+  color: #e5ebef;
+
+  margin: 0 32px 24px;
+  margin-left: 100px;
+  margin-top: 20px; /* Moves heading down */
+  padding-bottom: 16px;
+
+  border-bottom: 3px solid #9e9ea8;
+}
+.PersonalProject h2{
+  font-family: Arial, sans-serif;
+  font-size: 27px;
+  font-weight: bold;
+  color: #e5ebef;
+
+  margin: 0 32px 24px;
+  margin-left: 100px;
+  margin-top: 30px; /* Moves heading down */
+  padding-bottom: 16px;
+
+  border-bottom: 3px solid #9e9ea8;
+} .PersonalProject {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.PersonalProject svg {
+  display: block;
+  max-width: 100%;
+}
+.courseHeader {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.course-container {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.course-container svg {
+  display: block;
+  max-width: 100%;
+}
+
+.dashboard {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #1e1e24;
+}
+
+.dashboard-header {
+  position: relative;
+  width: 100%;
+}
+
+.dashboard-header svg {
+  display: block;
+}
+
+.profile-dropdown {
+  position: absolute;
+  top: 85px;
+  right: 30px;
+  width: 270px;
+  padding: 12px;
+  background-color: #2b2b35;
+  border: 1px solid #454550;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  z-index: 1000;
+}
+
+.profile-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  color: #e5ebef;
+}
+
+.profile-info strong {
+  font-size: 16px;
+}
+
+.profile-info p {
+  margin: 5px 0 0;
+  color: #9e9ea8;
+  font-size: 14px;
+}
+
+.profile-menu-avatar {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-divider {
+  height: 1px;
+  background-color: #454550;
+  margin: 8px 0;
+}
+
+.profile-item {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #e5ebef;
+  text-align: left;
+  font-family: Arial, sans-serif;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.profile-item:hover {
+  background-color: #3b3b47;
+}
+.dashboard-content {
+  flex: 1;
+  min-width: 0;
+  background: #1e1e24;
+}
+
+.dashboard-content .courseHeader {
+  width: 100%;
+}
+
+.dashboard-content .course-container {
+  width: 100%;
+}
+.teacher-dashboard {
+  width: 100%;
+  height: 100vh;
+  background: #1e1e24;
+}
+
+.teacher-dashboard .dashboard-header {
+  position: relative;
+  width: 100%;
+  height: 90px;
+}
+
+.dashboard-layout {
+  display: flex;
+  width: 100%;
+  height: calc(100vh - 90px);
+}
+
+.dashboard-content {
+  flex: 1;
+  min-width: 0;
+  background: #1e1e24;
+  overflow-y: auto;
+}
+
+.dashboard-content .courseHeader {
+  width: 100%;
+}
+
+.dashboard-content .course-container {
+  width: 100%;
+}
+.dashboard {
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+/* Assignment Page */
+.assignment-page {
+  background-color: #1e1e24;
+  height: 100vh;
+  color: #e5ebef;
+  overflow: hidden;
+}
+
+/* Sidebar and assignment content */
+.assignment-layout {
+  display: flex;
+  height: calc(100vh - 90px);
+}
+
+/* Right side: assignments */
+.assignment-content {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* SVG container */
+.assignment-svg {
+  width: 100%;
+}
+
+/* Loading and error messages */
+.assignment-message {
+  padding: 0 30px;
+}
+
+.assignment-error {
+  color: #ff7777;
+}
+
+.assignment-empty {
+  color: #b5bdc7;
 }

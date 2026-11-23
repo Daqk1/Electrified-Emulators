@@ -1,24 +1,26 @@
+
 import { useRef, useState } from "react";
 import type { SubmitEvent } from "react";
 
+interface LoginResult {
+  valid: boolean;
+  userId: number | undefined;
+  role: "teacher" | "student" | undefined;
+}
+
 function Login() {
-  // Store username and password
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
 
-  // Login status
   const [error, setError] = useState<string>("");
-  const [message, setMessage] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
 
-  // SVG container
   const svgRef = useRef<HTMLDivElement>(null);
 
-  // Ask backend to verify login
   async function userSearch(
     username: string,
-    password: string,
-  ): Promise<{ id: number; username: string } | null> {
+    password: string
+  ): Promise<LoginResult> {
     const response = await fetch("http://localhost:5001/api/login", {
       method: "POST",
       headers: {
@@ -30,45 +32,65 @@ function Login() {
       }),
     });
 
-    if (!response.ok) return null;
+    const data = await response.json();
 
-    const data = (await response.json()) as {
-      user?: { id?: number; username?: string };
-    };
-
-    if (typeof data.user?.id !== "number" || typeof data.user.username !== "string") {
-      return null;
+    if (!response.ok) {
+      return {
+        valid: false,
+        userId: undefined,
+        role: undefined,
+      };
     }
 
-    return { id: data.user.id, username: data.user.username };
+    const validRole =
+      data.role === "teacher" || data.role === "student";
+
+    return {
+      valid: typeof data.userId === "number" && validRole,
+      userId:
+        typeof data.userId === "number"
+          ? data.userId
+          : undefined,
+      role: validRole ? data.role : undefined,
+    };
   }
 
-  // Handle login button
   async function handleSubmit(
-    event: SubmitEvent<HTMLFormElement>,
+    event: SubmitEvent<HTMLFormElement>
   ): Promise<void> {
     event.preventDefault();
 
     setError("");
-    setMessage("");
     setLoading(true);
 
     try {
-      const user = await userSearch(username, password);
+      const data = await userSearch(username, password);
 
-      if (user) {
-        localStorage.setItem("userId", String(user.id));
-        localStorage.setItem("username", user.username);
+      if (data.valid && data.userId !== undefined && data.role) {
+        const userId = data.userId;
+        const role = data.role;
+
         console.log("Login successful!");
-        window.location.href = "/dashboard";
+        console.log("User ID:", userId);
+        console.log("Role:", role);
 
-        // Navigate to Dashboard after successful login
+        sessionStorage.setItem("userId", String(userId));
+        sessionStorage.setItem("role", role);
+
+        localStorage.setItem("username", username);
+        localStorage.setItem("userId", String(userId));
+
+        if (role === "teacher") {
+          window.location.href = "/teacher-dashboard";
+        } else {
+          window.location.href = "/dashboard";
+        }
       } else {
         setError("Invalid username or password");
       }
     } catch (error) {
       console.error("Login error:", error);
-      setError("Cannot connect to backennd server");
+      setError("Cannot connect to backend server");
     } finally {
       setLoading(false);
     }
@@ -76,6 +98,17 @@ function Login() {
 
   return (
     <div className="login-container">
+      <img
+        src="/CircuitEDU.png"
+        alt="CircuitEDU Logo"
+        style={{
+          width: "400px",
+          height: "auto",
+          display: "block",
+          margin: "0 auto",
+        }}
+      />
+
       <div ref={svgRef}></div>
 
       <form className="login-form" onSubmit={handleSubmit}>
@@ -100,7 +133,6 @@ function Login() {
         </button>
 
         {error && <p>{error}</p>}
-        {message && <p>{message}</p>}
       </form>
     </div>
   );
