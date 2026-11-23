@@ -262,9 +262,10 @@ app.get("/api/courses/:userId/:role", async (req, res) => {
       return res.status(400).json({
         message: "Invalid role",
       });
-    } 
-    const enrollmentRole = role === "teacher" ? "TeacherEnrollment" : "StudentEnrollment";
-    
+    }
+    const enrollmentRole =
+      role === "teacher" ? "TeacherEnrollment" : "StudentEnrollment";
+
     const enrollments = await Enrollment.find({
       userId: userId,
       role: enrollmentRole,
@@ -312,10 +313,10 @@ app.get("/api/teacher-assignments/:courseId", async (req, res) => {
 });
 //Acess the assignment teacher pov
 
-app.get("/api/assignment-data/:assignmentId",async(req,res)=>{
-try {
+app.get("/api/assignment-data/:assignmentId", async (req, res) => {
+  try {
     const assignmentId = Number(req.params.assignmentId);
-   
+
     if (!Number.isInteger(assignmentId)) {
       return res.status(400).json({
         message: "Invalid assignment ID",
@@ -324,7 +325,6 @@ try {
 
     const assignments = await Assignment.find({
       assignmentId: assignmentId,
-    
     });
     console.log("Assignments found:", assignments);
 
@@ -336,7 +336,179 @@ try {
       message: "Failed to fetch assignments",
     });
   }
-} );
+});
+
+app.patch("/api/submissions/:assignmentId/:userId/status", async (req, res) => {
+  try {
+    const assignmentId = Number(req.params.assignmentId);
+    const userId = Number(req.params.userId);
+
+    if (!Number.isInteger(assignmentId) || !Number.isInteger(userId)) {
+      return res.status(400).json({
+        message: "Invalid assignmentId or userId",
+      });
+    }
+
+    const updatedAssignment = await Assignment.findOneAndUpdate(
+      {
+        assignmentId,
+        userId,
+      },
+      {
+        $set: {
+          status: "submitted",
+          submittedAt: new Date(),
+        },
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+
+    if (!updatedAssignment) {
+      return res.status(404).json({
+        message: "Assignment not found",
+      });
+    }
+
+    return res.status(200).json(updatedAssignment);
+  } catch (error) {
+    console.error("Error updating submission:", error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+});
+
+app.post("/api/personal-projects", async (req, res) => {
+  try {
+    const { userId, title } = req.body;
+
+    const numericUserId = Number(userId);
+
+    if (
+      !Number.isInteger(numericUserId) ||
+      numericUserId <= 0 ||
+      typeof title !== "string" ||
+      title.trim() === ""
+    ) {
+      return res.status(400).json({
+        message: "Invalid userId or title",
+      });
+    }
+
+    const lastProject = await PersonalProject.findOne().sort({
+      project_id: -1,
+    });
+
+    const newProjectId = lastProject ? (lastProject.project_id ?? 0) + 1 : 1;
+
+    const newProject = await PersonalProject.create({
+      project_id: newProjectId,
+      userId: numericUserId,
+      title: title.trim(),
+    });
+
+    return res.status(201).json(newProject);
+  } catch (error) {
+    console.error("Error creating personal project:", error);
+
+    return res.status(500).json({
+      message: "Could not create personal project",
+    });
+  }
+});
+
+app.post("/api/assignments", async (req, res) => {
+  try {
+    const {
+      courseId,
+      assignmentName,
+      description,
+      dueAt,
+      pointsPossible,
+    } = req.body;
+
+    const numericCourseId = Number(courseId);
+    const numericPointsPossible = Number(pointsPossible);
+
+    if (
+      !Number.isInteger(numericCourseId) ||
+      numericCourseId <= 0
+    ) {
+      return res.status(400).json({
+        message: "Invalid course ID",
+      });
+    }
+
+    if (
+      typeof assignmentName !== "string" ||
+      assignmentName.trim() === ""
+    ) {
+      return res.status(400).json({
+        message: "Assignment name is required",
+      });
+    }
+
+    if (
+      !Number.isFinite(numericPointsPossible) ||
+      numericPointsPossible < 0
+    ) {
+      return res.status(400).json({
+        message: "Invalid points possible",
+      });
+    }
+
+    const students = await Enrollment.find({
+      courseId: numericCourseId,
+      role: "StudentEnrollment",
+    });
+
+    if (students.length === 0) {
+      return res.status(404).json({
+        message: "No students enrolled in this course",
+      });
+    }
+
+    const lastAssignment = await Assignment.findOne()
+      .sort({ assignmentId: -1 });
+
+    const newAssignmentId = lastAssignment
+      ? (lastAssignment.assignmentId ?? 0) + 1
+      : 1;
+
+    const assignments = students.map((student) => ({
+      userId: Number(student.userId),
+      courseId: numericCourseId,
+      assignmentId: newAssignmentId,
+      assignmentName: assignmentName.trim(),
+      description:
+        typeof description === "string"
+          ? description.trim()
+          : "",
+      dueAt: dueAt ? new Date(dueAt) : undefined,
+      pointsPossible: numericPointsPossible,
+      status: "not submitted" as const,
+    }));
+
+    const createdAssignments =
+      await Assignment.insertMany(assignments);
+
+    return res.status(201).json({
+      message: "Assignment created successfully",
+      assignmentId: newAssignmentId,
+      assignments: createdAssignments,
+    });
+  } catch (error) {
+    console.error("Error creating assignment:", error);
+
+    return res.status(500).json({
+      message: "Could not create assignment",
+    });
+  }
+});
 // Connect MongoDB and start server
 async function startServer() {
   try {

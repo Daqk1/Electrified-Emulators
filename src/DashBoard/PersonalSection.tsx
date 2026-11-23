@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { SVG } from "@svgdotjs/svg.js";
 
@@ -17,6 +16,9 @@ export default function PersonalProjectList({
 }) {
   const [projects, setProjects] = useState<PersonalProject[]>([]);
   const [error, setError] = useState<string>("");
+  const [showPopup, setShowPopup] = useState(false);
+  const [projectTitle, setProjectTitle] = useState("");
+  const [creating, setCreating] = useState(false);
 
   const svgRef = useRef<HTMLDivElement>(null);
 
@@ -30,6 +32,63 @@ export default function PersonalProjectList({
     )}`;
   }
 
+  async function createProject() {
+    const title = projectTitle.trim();
+
+    if (title === "") {
+      setError("Project name is required");
+      return;
+    }
+
+    try {
+      setCreating(true);
+      setError("");
+
+      const response = await fetch(
+        "http://localhost:5001/api/personal-projects",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId,
+            title,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to create project"
+        );
+      }
+
+      const newProject: PersonalProject = data;
+
+      setProjects((currentProjects) => [
+        ...currentProjects,
+        newProject,
+      ]);
+
+      setProjectTitle("");
+      setShowPopup(false);
+      setError("");
+    } catch (error) {
+      console.error("Error creating project:", error);
+
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("Unable to create project");
+      }
+    } finally {
+      setCreating(false);
+    }
+  }
+
   useEffect(() => {
     const controller = new AbortController();
 
@@ -39,24 +98,39 @@ export default function PersonalProjectList({
 
         const response = await fetch(
           `http://localhost:5001/api/personal-projects/${userId}`,
-          { signal: controller.signal }
+          {
+            signal: controller.signal,
+          }
         );
 
         if (!response.ok) {
-          throw new Error(`HTTP error: ${response.status}`);
+          throw new Error(
+            `HTTP error: ${response.status}`
+          );
         }
 
-        const data: PersonalProject[] = await response.json();
+        const data: PersonalProject[] =
+          await response.json();
 
         if (!controller.signal.aborted) {
           setProjects(data);
           setError("");
-          console.log("Projects received:", data);
+
+          console.log(
+            "Projects received:",
+            data
+          );
         }
       } catch (error) {
         if (!controller.signal.aborted) {
-          console.error("Error loading projects:", error);
-          setError("Unable to load personal projects");
+          console.error(
+            "Error loading projects:",
+            error
+          );
+
+          setError(
+            "Unable to load personal projects"
+          );
         }
       }
     }
@@ -67,7 +141,8 @@ export default function PersonalProjectList({
       setProjects([]);
     }
 
-    return () => controller.abort();
+    return () =>
+      controller.abort();
   }, [userId]);
 
   useEffect(() => {
@@ -78,25 +153,36 @@ export default function PersonalProjectList({
     function drawProjects() {
       container!.innerHTML = "";
 
-      const width = container!.clientWidth;
+      const width =
+        container!.clientWidth;
+
       if (width <= 0) return;
 
       const padding = 30;
       const rowHeight = 78;
       const gap = 16;
       const startY = 55;
-      const cardWidth = Math.max(0, width - padding * 2);
+
+      const cardWidth = Math.max(
+        0,
+        width - padding * 2
+      );
 
       const height = Math.max(
         120,
-        startY + projects.length * (rowHeight + gap) + 20
+        startY +
+          projects.length *
+            (rowHeight + gap) +
+          20
       );
 
       const draw = SVG()
         .addTo(container!)
         .size(width, height);
 
-      draw.rect(width, height).fill("#1e1e24");
+      draw
+        .rect(width, height)
+        .fill("#1e1e24");
 
       draw
         .text("Name")
@@ -108,57 +194,87 @@ export default function PersonalProjectList({
         })
         .fill("#e5ebef");
 
-      // load the project
-      projects.forEach((project, index) => {
-        const x = padding;
-        const y = startY + index * (rowHeight + gap);
+      projects.forEach(
+        (project, index) => {
+          const x = padding;
 
-        const projectGroup = draw.group();
+          const y =
+            startY +
+            index *
+              (rowHeight + gap);
 
-        const projectBox = projectGroup
-          .rect(cardWidth, rowHeight)
-          .move(x, y)
-          .fill("#26262e")
-          .stroke({
-            color: "#454550",
-            width: 1,
-          })
-          .radius(12);
+          const projectGroup =
+            draw.group();
 
-        projectGroup
-          .text(project.title || "Untitled Project")
-          .move(x + 20, y + 23)
-          .font({
-            size: 18,
-            family: "Arial",
-            weight: "bold",
-          })
-          .fill("#e5ebef");
+          const projectBox =
+            projectGroup
+              .rect(
+                cardWidth,
+                rowHeight
+              )
+              .move(x, y)
+              .fill("#26262e")
+              .stroke({
+                color: "#454550",
+                width: 1,
+              })
+              .radius(12);
 
-        // when the mouse at the project
-        projectGroup.on("mouseenter", () => {
-          projectBox.stroke({
-            color: "#4da9c5",
-            width: 2,
-          });
-        });
-        // 
-        projectGroup.on("mouseleave", () => {
-          projectBox.stroke({
-            color: "#454550",
-            width: 1,
-          });
-        });
+          projectGroup
+            .text(
+              project.title ||
+                "Untitled Project"
+            )
+            .move(x + 20, y + 23)
+            .font({
+              size: 18,
+              family: "Arial",
+              weight: "bold",
+            })
+            .fill("#e5ebef");
 
-        projectGroup.click(() => handleClick(project));
-        projectGroup.css("cursor", "pointer");
-      });
+          projectGroup.on(
+            "mouseenter",
+            () => {
+              projectBox.stroke({
+                color: "#4da9c5",
+                width: 2,
+              });
+            }
+          );
+
+          projectGroup.on(
+            "mouseleave",
+            () => {
+              projectBox.stroke({
+                color: "#454550",
+                width: 1,
+              });
+            }
+          );
+
+          projectGroup.click(() =>
+            handleClick(project)
+          );
+
+          projectGroup.css(
+            "cursor",
+            "pointer"
+          );
+        }
+      );
     }
 
     drawProjects();
 
-    const resizeObserver = new ResizeObserver(drawProjects);
-    resizeObserver.observe(container);
+    const resizeObserver =
+      new ResizeObserver(
+        drawProjects
+      );
+
+    resizeObserver.observe(
+      container
+    );
 
     return () => {
       resizeObserver.disconnect();
@@ -168,14 +284,113 @@ export default function PersonalProjectList({
 
   return (
     <div className="PersonalProject">
-      <h2>Personal Projects</h2>
+      <div className="project-title-row">
+        <h2>Personal Projects</h2>
 
-      <div ref={svgRef} style={{ width: "100%" }}></div>
+        <button
+          type="button"
+          className="add-project-button"
+          onClick={() => {
+            setError("");
+            setShowPopup(true);
+          }}
+        >
+          +
+        </button>
+      </div>
 
-      {error && (
-        <p style={{ color: "#ff7777", padding: "0 30px" }}>
+      <div
+        ref={svgRef}
+        style={{ width: "100%" }}
+      ></div>
+
+      {!showPopup && error && (
+        <p
+          style={{
+            color: "#ff7777",
+            padding: "0 30px",
+          }}
+        >
           {error}
         </p>
+      )}
+
+      {showPopup && (
+        <div
+          className="popup-overlay"
+          onClick={() => {
+            if (!creating) {
+              setShowPopup(false);
+              setProjectTitle("");
+              setError("");
+            }
+          }}
+        >
+          <div
+            className="popup"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
+            <h3>Create New Project</h3>
+
+            <input
+              type="text"
+              placeholder="Project name"
+              value={projectTitle}
+              disabled={creating}
+              autoFocus
+              onChange={(event) =>
+                setProjectTitle(
+                  event.target.value
+                )
+              }
+              onKeyDown={(event) => {
+                if (
+                  event.key === "Enter" &&
+                  projectTitle.trim() !== ""
+                ) {
+                  void createProject();
+                }
+              }}
+            />
+
+            {error && (
+              <p className="popup-error">
+                {error}
+              </p>
+            )}
+
+            <div className="popup-buttons">
+              <button
+                type="button"
+                disabled={creating}
+                onClick={() => {
+                  setShowPopup(false);
+                  setProjectTitle("");
+                  setError("");
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={
+                  creating ||
+                  projectTitle.trim() === ""
+                }
+                onClick={() =>
+                  void createProject()
+                }
+              >
+                {creating
+                  ? "Creating..."
+                  : "Create"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
