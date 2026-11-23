@@ -54,6 +54,26 @@ describe('immutable component operations', () => {
 });
 
 describe('wire validity', () => {
+  it('updates each pin status when moved or rotated away from a fixed wire and back', () => {
+    const original = deepFreeze(circuitWithRoute());
+    const { from, to } = original.wires[0]!;
+    const moved = moveComponent(original, from.compId, { x: 60, y: 40 });
+    expect(isPinConnected(moved, from)).toBe(false);
+    expect(isPinConnected(moved, to)).toBe(true);
+    const restored = moveComponent(moved, from.compId, { x: 0, y: 0 });
+    expect(isPinConnected(restored, from)).toBe(true);
+    let rotated = restored;
+    for (let turn = 0; turn < 4; turn++) {
+      rotated = rotateSelected(rotated, { type: 'component', id: to.compId });
+      expect(isPinConnected(rotated, to)).toBe(turn === 3);
+      expect(isPinConnected(rotated, from)).toBe(true);
+    }
+    const routeOnly = { ...moved, wires: [{ id: 'fixed', from, to, route: moved.wires[0]!.route! }] };
+    expect(isPinConnected(routeOnly, from)).toBe(false);
+    expect(isPinConnected(routeOnly, to)).toBe(true);
+    expect(isPinConnected(original, from)).toBe(true);
+  });
+
   it('allows a new connection and prevents duplicates in either direction', () => {
     const connected = deepFreeze(circuitWithRoute());
     const empty = { components: connected.components, wires: [] };

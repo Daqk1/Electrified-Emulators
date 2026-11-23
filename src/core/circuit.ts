@@ -1,3 +1,4 @@
+import { getPinAbsolutePosition, getCircuitWireRoute } from './geometry';
 import { getNextLabel } from './labels';
 import { COMPONENT_TEMPLATES } from './templates';
 import type { CircuitComponent, CircuitState, CircuitWire, ComponentType, PinRef, Point, Selection } from './types';
@@ -6,6 +7,7 @@ export function cloneCircuit(circuit: CircuitState): CircuitState {
   return {
     components: circuit.components.map((component) => ({ ...component })),
     wires: circuit.wires.map((wire) => ({ ...wire, from: { ...wire.from }, to: { ...wire.to },
+      ...(wire.route ? { route: wire.route.map((point) => ({ ...point })) } : {}),
       ...(wire.fromPosition ? { fromPosition: { ...wire.fromPosition } } : {}),
       ...(wire.toPosition ? { toPosition: { ...wire.toPosition } } : {}),
     })),
@@ -30,13 +32,25 @@ export function createComponent(
 
 export function addComponent(circuit: CircuitState, component: CircuitComponent): CircuitState {
   if (!component.id || hasId(circuit, component.id)) return circuit;
-  return { ...circuit, components: [...circuit.components, { ...component }] };
+  return { ...circuit, wires: fixWirePositions(circuit), components: [...circuit.components, { ...component }] };
+}
+
+// Capture endpoints before any component transform so completed wires stay fixed.
+function fixWirePositions(circuit: CircuitState): CircuitWire[] {
+  return circuit.wires.map((wire) => {
+    const fromPosition = wire.fromPosition ?? getPinAbsolutePosition(circuit, wire.from);
+    const toPosition = wire.toPosition ?? getPinAbsolutePosition(circuit, wire.to);
+    if (wire.fromPosition && wire.toPosition && wire.route) return wire;
+    const route = getCircuitWireRoute(circuit, wire);
+    return fromPosition && toPosition && route ? { ...wire, fromPosition, toPosition, route } : wire;
+  });
 }
 
 export function moveComponent(circuit: CircuitState, id: string, position: Point): CircuitState {
   if (!circuit.components.some((component) => component.id === id)) return circuit;
   return {
     ...circuit,
+    wires: fixWirePositions(circuit),
     components: circuit.components.map((component) => component.id === id
       ? { ...component, x: position.x, y: position.y } : component),
   };
@@ -58,6 +72,7 @@ export function rotateSelected(circuit: CircuitState, selection: Selection): Cir
   if (!component) return circuit;
   return {
     ...circuit,
+    wires: fixWirePositions(circuit),
     components: circuit.components.map((part) => part.id === component.id
       ? { ...part, rotation: (part.rotation + 90) % 360 } : part),
   };
@@ -69,7 +84,7 @@ export function deleteSelected(circuit: CircuitState, selection: Selection): Cir
     if (!circuit.components.some((component) => component.id === selection.id)) return circuit;
     return {
       components: circuit.components.filter((component) => component.id !== selection.id),
-      wires: circuit.wires.filter((wire) => wire.from.compId !== selection.id && wire.to.compId !== selection.id),
+      wires: fixWirePositions(circuit).filter((wire) => wire.from.compId !== selection.id && wire.to.compId !== selection.id),
     };
   }
   if (!circuit.wires.some((wire) => wire.id === selection.id)) return circuit;
@@ -104,5 +119,14 @@ export function addWire(circuit: CircuitState, wire: CircuitWire): CircuitState 
 }
 
 export function isPinConnected(circuit: CircuitState, ref: PinRef): boolean {
-  return circuit.wires.some((wire) => samePin(wire.from, ref) || samePin(wire.to, ref));
+  const position = getPinAbsolutePosition(circuit, ref);
+  if (!position) return false;
+  return circuit.wires.some((wire) => (['from', 'to'] as const).some((end) => {
+    if (!samePin(wire[end], ref)) return false;
+    const endpoint = end === 'from'
+      ? wire.route?.[0] ?? wire.fromPosition
+      : wire.route?.at(-1) ?? wire.toPosition;
+    // Legacy wires without saved geometry still terminate at their pins.
+    return !endpoint || Math.hypot(position.x - endpoint.x, position.y - endpoint.y) < 1e-6;
+  }));
 }
