@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { createDemoCircuit } from '../core/demo';
-import { getPinAbsolutePosition, wirePath } from '../core/geometry';
+import {
+  getPinAbsolutePosition,
+  getPinOutwardDirection,
+  getWireObstacles,
+  routeWire,
+  type WireSegment,
+} from '../core/geometry';
 import { part, deepFreeze } from '../test/coreHelpers';
 import { exportSvg } from './exportSvg';
 
@@ -20,11 +26,29 @@ describe('standalone SVG serialization', () => {
     expect(svg.querySelectorAll('.circuit-comp')).toHaveLength(5);
     expect(svg.querySelectorAll('.circuit-pin')).toHaveLength(9);
     expect(svg.querySelectorAll('.junction-dot')).toHaveLength(10);
+    const obstacles = getWireObstacles(circuit);
+    const obstacleByComponentId = new Map(circuit.components.map((component, index) => [component.id, obstacles[index]]));
+    const occupiedSegments: WireSegment[] = [];
     for (const wire of circuit.wires) {
+      const from = getPinAbsolutePosition(circuit, wire.from)!;
+      const to = getPinAbsolutePosition(circuit, wire.to)!;
+      const route = routeWire(
+        from,
+        to,
+        obstacles,
+        getPinOutwardDirection(circuit, wire.from) ?? undefined,
+        getPinOutwardDirection(circuit, wire.to) ?? undefined,
+        occupiedSegments,
+        {
+          from: obstacleByComponentId.get(wire.from.compId),
+          to: obstacleByComponentId.get(wire.to.compId),
+        },
+      );
       const path = svg.querySelector(`[data-id="${wire.id}"] path`)!;
-      expect(path.getAttribute('d')).toBe(wirePath(getPinAbsolutePosition(circuit, wire.from)!, getPinAbsolutePosition(circuit, wire.to)!));
+      expect(path.getAttribute('d')).toBe(route.path);
       expect(path.getAttribute('stroke')).toBe('#06d6a0');
       expect(path.getAttribute('stroke-width')).toBe('2.5');
+      occupiedSegments.push(...route.segments);
     }
     expect(svg.querySelectorAll('[stroke^="var"],[fill^="var"],pattern,filter,.comp-outline,[data-hit-path]')).toHaveLength(0);
   });

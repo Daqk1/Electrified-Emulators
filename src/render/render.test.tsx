@@ -14,7 +14,13 @@ import { ComponentSymbol } from './ComponentSymbol';
 import { CircuitScene } from './CircuitScene';
 import { PART_SYMBOLS } from './PartGraphic';
 import { Grid } from './Grid';
-import { getPinAbsolutePosition, wirePath } from '../core/geometry';
+import {
+  getPinAbsolutePosition,
+  getPinOutwardDirection,
+  getWireObstacles,
+  routeCircuitWires,
+  routeWire,
+} from '../core/geometry';
 
 // Run only the original symbol callbacks, never its DOM constructor.
 const original = vm.runInNewContext(
@@ -97,8 +103,23 @@ describe('scene layering and decoration', () => {
     const circuit = createDemoCircuit();
     circuit.components[1] = { ...circuit.components[1]!, x: 360, rotation: 90 };
     const wiring = { from: { compId: 'v1', pinId: 'pos' }, preview: { x: 310, y: 180 }, hoverPin: { compId: 'sw1', pinId: 'pin1' } };
+    const obstacles = getWireObstacles(circuit);
+    const obstacleByComponentId = new Map(circuit.components.map((component, index) => [component.id, obstacles[index]]));
+    const routedWires = routeCircuitWires(circuit, obstacles);
+    const preview = routeWire(
+      getPinAbsolutePosition(circuit, wiring.from)!,
+      getPinAbsolutePosition(circuit, wiring.hoverPin)!,
+      obstacles,
+      getPinOutwardDirection(circuit, wiring.from) ?? undefined,
+      getPinOutwardDirection(circuit, wiring.hoverPin) ?? undefined,
+      routedWires.flatMap((wire) => wire.segments),
+      {
+        from: obstacleByComponentId.get(wiring.from.compId),
+        to: obstacleByComponentId.get(wiring.hoverPin.compId),
+      },
+    );
     const { container } = render(<svg><CircuitScene circuit={circuit} wiring={wiring} /></svg>);
-    expect(container.querySelector('.circuit-wire-preview')).toHaveAttribute('d', wirePath(getPinAbsolutePosition(circuit, wiring.from)!, getPinAbsolutePosition(circuit, wiring.hoverPin)!));
+    expect(container.querySelector('.circuit-wire-preview')).toHaveAttribute('d', preview.path);
   });
   it('draws grid, wires, preview then five demo components with exact transforms', () => {
     const circuit = createDemoCircuit();

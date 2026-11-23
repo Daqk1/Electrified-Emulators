@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { circuitWithRoute, part } from '../test/coreHelpers';
 import { findComponentAtWorldPos, findPinAtWorldPos, findWireAtWorldPos, wirePreviewTarget } from './hitTests';
-import { rotatePoint } from './geometry';
+import { rotatePoint, routeCircuitWires } from './geometry';
 
 describe('pin hit tests and preview targets', () => {
   it('includes radius 12, using component then pin order', () => {
@@ -61,23 +61,36 @@ describe('component hit tests', () => {
 });
 
 describe('wire hit tests', () => {
-  it.each([{ x: 50, y: 0 }, { x: 80, y: 50 }, { x: 110, y: 100 }, { x: 30, y: 0 }, { x: 130, y: 100 }])(
-    'hits each segment and endpoints at $x,$y', (point) => expect(findWireAtWorldPos(circuitWithRoute(), point)?.id).toBe('w1'),
-  );
+  it('hits each rendered segment and both endpoints', () => {
+    const circuit = circuitWithRoute();
+    const route = routeCircuitWires(circuit)[0]!;
+    for (const { start, end } of route.segments) {
+      if (start.x === end.x && start.y === end.y) continue;
+      const midpoint = { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 };
+      expect(findWireAtWorldPos(circuit, midpoint)?.id).toBe('w1');
+    }
+    expect(findWireAtWorldPos(circuit, route.from)?.id).toBe('w1');
+    expect(findWireAtWorldPos(circuit, route.to)?.id).toBe('w1');
+  });
   it('uses strict distance <8 and wire order', () => {
     const circuit = circuitWithRoute();
-    expect(findWireAtWorldPos(circuit, { x: 50, y: 7.999 })?.id).toBe('w1');
-    expect(findWireAtWorldPos(circuit, { x: 50, y: 8 })).toBeNull();
+    const route = routeCircuitWires(circuit)[0]!;
+    const horizontal = route.segments.find(({ start, end }) => start.y === end.y && Math.abs(end.x - start.x) > 16)!;
+    const midpoint = { x: (horizontal.start.x + horizontal.end.x) / 2, y: horizontal.start.y };
+    expect(findWireAtWorldPos(circuit, { x: midpoint.x, y: midpoint.y + 7.999 })?.id).toBe('w1');
+    expect(findWireAtWorldPos(circuit, { x: midpoint.x, y: midpoint.y + 8 })).toBeNull();
     circuit.wires.push({ ...circuit.wires[0]!, id: 'w2' });
-    expect(findWireAtWorldPos(circuit, { x: 80, y: 50 })?.id).toBe('w1');
-    expect(findWireAtWorldPos(circuit, { x: 85, y: 50 }, 4)).toBeNull();
+    expect(findWireAtWorldPos(circuit, midpoint)?.id).toBe('w1');
+    expect(findWireAtWorldPos(circuit, { x: midpoint.x, y: midpoint.y + 5 }, 4)).toBeNull();
   });
   it('handles degenerate segments and missing endpoints', () => {
     const circuit = circuitWithRoute();
     circuit.components[1] = part({ id: 'r2', x: 60, y: 100 });
-    expect(findWireAtWorldPos(circuit, { x: 30, y: 50 })?.id).toBe('w1');
+    const route = routeCircuitWires(circuit)[0]!;
+    expect(findWireAtWorldPos(circuit, route.from)?.id).toBe('w1');
     circuit.components[1] = part({ id: 'r2', x: 60, y: 0 });
-    expect(findWireAtWorldPos(circuit, { x: 33, y: 4 })?.id).toBe('w1');
+    expect(routeCircuitWires(circuit)[0]?.segments).toHaveLength(0);
+    expect(findWireAtWorldPos(circuit, route.from)).toBeNull();
     circuit.components.pop();
     expect(findWireAtWorldPos(circuit, { x: 30, y: 0 })).toBeNull();
   });

@@ -1,6 +1,9 @@
 import {
   getPinAbsolutePosition,
+  getPinOutwardDirection,
   getWireObstacles,
+  routeCircuitWires,
+  routeWire,
 } from "../core/geometry";
 import type { CircuitState, EditorState, Selection } from "../core/types";
 import { ComponentSymbol } from "./ComponentSymbol";
@@ -26,30 +29,47 @@ export function CircuitScene({
   const previewTo = wiring?.hoverPin
     ? (getPinAbsolutePosition(circuit, wiring.hoverPin) ?? wiring.preview)
     : wiring?.preview;
+  const obstacles = getWireObstacles(circuit);
+  const obstacleByComponentId = new Map(circuit.components.map((component, index) => [component.id, obstacles[index]]));
+  const routedWires = routeCircuitWires(circuit, obstacles);
+  const occupiedSegments = routedWires.flatMap((wire) => wire.segments);
+  const previewPath = previewFrom && previewTo && wiring
+    ? routeWire(
+      previewFrom,
+      previewTo,
+      obstacles,
+      getPinOutwardDirection(circuit, wiring.from) ?? undefined,
+      wiring.hoverPin ? getPinOutwardDirection(circuit, wiring.hoverPin) ?? undefined : undefined,
+      occupiedSegments,
+      {
+        from: obstacleByComponentId.get(wiring.from.compId),
+        to: wiring.hoverPin ? obstacleByComponentId.get(wiring.hoverPin.compId) : undefined,
+      },
+    ).path
+    : undefined;
   return (
     <>
       <g data-layer="wires">
-        {circuit.wires.map((wire) => {
-          const from = getPinAbsolutePosition(circuit, wire.from);
-          const to = getPinAbsolutePosition(circuit, wire.to);
-          const obstacles = getWireObstacles(circuit);
-          return from && to ? (
-            <Wire
-              key={wire.id}
-              id={wire.id}
-              from={from}
-              to={to}
-              obstacles={obstacles}
-              variant={variant}
-              selected={selection?.type === "wire" && selection.id === wire.id}
-            />
-          ) : null;
-        })}
+        {routedWires.map(({ wire, from, to, path }) => (
+          <Wire
+            key={wire.id}
+            id={wire.id}
+            from={from}
+            to={to}
+            pathData={path}
+            variant={variant}
+            selected={selection?.type === "wire" && selection.id === wire.id}
+          />
+        ))}
       </g>
       {variant === "canvas" && (
         <g data-layer="preview">
           {previewFrom && previewTo && (
-            <WirePreview from={previewFrom} to={previewTo} />
+            <WirePreview
+              from={previewFrom}
+              to={previewTo}
+              {...(previewPath !== undefined ? { pathData: previewPath } : {})}
+            />
           )}
         </g>
       )}
