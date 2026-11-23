@@ -1,5 +1,5 @@
 import { COMPONENT_TEMPLATES } from './templates';
-import type { CircuitState, ComponentType, PinRef, Point } from './types';
+import type { CircuitState, CircuitWire, ComponentType, PinRef, Point } from './types';
 
 export function snap(value: number, enabled = true, gridSize = 20): number {
   return enabled ? Math.round(value / gridSize) * gridSize : value;
@@ -154,4 +154,12 @@ export function distToSegment(point: Point, start: Point, end: Point): number {
     point.x - (start.x + t * (end.x - start.x)),
     point.y - (start.y + t * (end.y - start.y)),
   );
+}
+
+// Completed wires reuse their saved geometry instead of following live obstacles.
+export function getCircuitWireRoute(circuit: CircuitState, wire: CircuitWire): Point[] | null {
+  if (wire.route) return wire.route;
+  const from = wire.fromPosition ?? getPinAbsolutePosition(circuit, wire.from);
+  const to = wire.toPosition ?? getPinAbsolutePosition(circuit, wire.to);
+  return from && to ? wireRoute(from, to, getWireObstacles(circuit)) : null;
 }

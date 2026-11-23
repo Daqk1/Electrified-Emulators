@@ -1,3 +1,4 @@
+import { getCircuitWireRoute } from '../core/geometry';
 import type { CircuitState } from '../core/types';
 import { addComponent, addWire, cloneCircuit, deleteSelected, moveComponent, rotateSelected, updateComponent } from '../core/circuit';
 import type { EditorEvent } from './actions';
@@ -18,7 +19,10 @@ export function circuitReducer(
     case 'rotateSelected': return rotateSelected(state, action.selection);
     case 'deleteSelected': return deleteSelected(state, action.selection);
     case 'updateComponent': return updateComponent(state, action.id, action.fields);
-    case 'completeWire': return addWire(state, action.wire);
+    case 'completeWire': {
+      const route = getCircuitWireRoute(state, action.wire);
+      return addWire(state, route ? { ...action.wire, route } : action.wire);
+    }
     default: return state;
   }
 }

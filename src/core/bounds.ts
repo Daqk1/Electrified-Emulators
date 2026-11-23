@@ -15,7 +15,7 @@ export function calculateCircuitBoundingBox(circuit: CircuitState): BoundingBox 
     maxY = Math.max(maxY, component.y + 50);
   }
   for (const wire of circuit.wires) {
-    for (const point of [wire.fromPosition, wire.toPosition]) {
+    for (const point of [wire.fromPosition, wire.toPosition, ...(wire.route ?? [])]) {
       if (!point) continue;
       minX = Math.min(minX, point.x);
       minY = Math.min(minY, point.y);

@@ -1,10 +1,9 @@
 import {
   distToSegment,
   getPinAbsolutePosition,
-  getWireObstacles,
+  getCircuitWireRoute,
   rotatePoint,
   snap,
-  wireRoute,
 } from './geometry';
 import { COMPONENT_TEMPLATES } from './templates';
 import type { CircuitComponent, CircuitState, CircuitWire, PinRef, Point } from './types';
@@ -34,15 +33,9 @@ export function findComponentAtWorldPos(circuit: CircuitState, point: Point): Ci
 
 export function findWireAtWorldPos(circuit: CircuitState, point: Point, threshold = 8): CircuitWire | null {
   for (const wire of circuit.wires) {
-    const from = wire.fromPosition ?? getPinAbsolutePosition(circuit, wire.from);
-    const to = wire.toPosition ?? getPinAbsolutePosition(circuit, wire.to);
-    if (!from || !to) continue;
-    const obstacles = getWireObstacles(circuit);
-    const route = wireRoute(from, to, obstacles);
-    const [p1, p2, p3, p4] = route;
-    if (distToSegment(point, p1, p2) < threshold
-      || distToSegment(point, p2, p3) < threshold
-      || distToSegment(point, p3, p4) < threshold) return wire;
+    const route = getCircuitWireRoute(circuit, wire);
+    if (!route) continue;
+    if (route.slice(1).some((end, index) => distToSegment(point, route[index]!, end) < threshold)) return wire;
   }
   return null;
 }

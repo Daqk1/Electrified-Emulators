@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createDemoCircuit } from '../core/demo';
-import { getPinAbsolutePosition, wirePath } from '../core/geometry';
+import { getPinAbsolutePosition, getWireObstacles, wirePath } from '../core/geometry';
 import { part, deepFreeze } from '../test/coreHelpers';
 import { exportSvg } from './exportSvg';
 
@@ -22,7 +22,7 @@ describe('standalone SVG serialization', () => {
     expect(svg.querySelectorAll('.junction-dot')).toHaveLength(10);
     for (const wire of circuit.wires) {
       const path = svg.querySelector(`[data-id="${wire.id}"] path`)!;
-      expect(path.getAttribute('d')).toBe(wirePath(getPinAbsolutePosition(circuit, wire.from)!, getPinAbsolutePosition(circuit, wire.to)!));
+      expect(path.getAttribute('d')).toBe(wirePath(getPinAbsolutePosition(circuit, wire.from)!, getPinAbsolutePosition(circuit, wire.to)!, getWireObstacles(circuit)));
       expect(path.getAttribute('stroke')).toBe('#06d6a0');
       expect(path.getAttribute('stroke-width')).toBe('2.5');
     }

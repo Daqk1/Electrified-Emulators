@@ -37,6 +37,13 @@ function parsePoint(value: unknown, path: string): Point {
   return { x: finite(point.x, `${path}.x`), y: finite(point.y, `${path}.y`) };
 }
 
+function parseRoute(value: unknown, path: string): Point[] {
+  if (!Array.isArray(value) || value.length !== 4) {
+    throw new ProjectFormatError(`${path} must contain four points.`);
+  }
+  return value.map((point, index) => parsePoint(point, `${path}[${index}]`));
+}
+
 // Accept the old envelope or metadata-free legacy data; return only circuit fields.
 // Reconstruct known fields rather than allowing imported UI state/waypoints to leak in.
 export function validateProject(value: unknown): CircuitState {
@@ -75,6 +82,7 @@ export function validateProject(value: unknown): CircuitState {
     const data = record(value, path);
     const wire: CircuitWire = {
       id: uniqueId(data.id, `${path}.id`),
+      ...(data.route !== undefined ? { route: parseRoute(data.route, `${path}.route`) } : {}),
       from: parsePin(data.from, `${path}.from`), to: parsePin(data.to, `${path}.to`),
       ...(data.fromPosition !== undefined ? { fromPosition: parsePoint(data.fromPosition, `${path}.fromPosition`) } : {}),
       ...(data.toPosition !== undefined ? { toPosition: parsePoint(data.toPosition, `${path}.toPosition`) } : {}),
