@@ -3,7 +3,6 @@ import mongoose, { Schema } from "mongoose";
 
 // Define the User data types
 interface IUser {
-  _id: string;
   UserID: number;
   username: string;
   password: string;
@@ -13,7 +12,6 @@ interface IUser {
 
 // Create the MongoDB schema
 const UserSchema = new Schema<IUser>({
-  _id: Number,
   UserID: Number,
   username: String,
   password: String,

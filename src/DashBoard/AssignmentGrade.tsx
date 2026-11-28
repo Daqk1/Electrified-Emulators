@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { SVG } from "@svgdotjs/svg.js";
 import Header from "./header";
 import TeacherSidebar from "./SideBar";
+import GradeAssignment from "./gradeAssignment";
 
 interface Submission {
   userId: number;
@@ -9,6 +10,7 @@ interface Submission {
   dueAt: string;
   status: string;
   grade: number | null;
+  studentName:string;
 }
 
 export default function AssignmentGrade({
@@ -20,7 +22,8 @@ export default function AssignmentGrade({
 
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const svgRef = useRef<HTMLDivElement>(null);
-
+  const [selectedStudent, setSelectedStudent] =
+  useState<Submission | null>(null);
   useEffect(() => {
     async function loadSubmissions() {
       try {
@@ -148,7 +151,7 @@ export default function AssignmentGrade({
           .radius(12);
 
         group
-          .text(`Student ${submission.userId}`)
+          .text(`Student ${submission.studentName}`)
           .move(x + 20, y + 25)
           .font({
             size: 17,
@@ -178,6 +181,7 @@ export default function AssignmentGrade({
           })
           .fill("#e5ebef");
 
+       
         const gradeText =
           submission.grade !== null &&
           submission.grade !== undefined
@@ -187,12 +191,12 @@ export default function AssignmentGrade({
         group
           .text(gradeText)
           .move(width * 0.77, y + 25)
-          .font({
-            size: 15,
-            family: "Arial",
-          })
-          .fill("#e5ebef");
-
+          .font({ size: 15, family: "Arial",})
+          .fill("#e5ebef")
+          .css("cursor", "pointer")
+          .click(() => {setSelectedStudent(submission);
+        });
+       
         const view = group
           .text("View")
           .move(width * 0.9, y + 25)
@@ -242,16 +246,35 @@ export default function AssignmentGrade({
   }, [submissions]);
 
   return (
-    <div className="teacher-dashboard">
-      <Header />
+  <div className="teacher-dashboard">
+    <Header />
 
-      <div className="dashboard-layout">
-        <TeacherSidebar userId={userId} />
+    <div className="dashboard-layout">
+      <TeacherSidebar userId={userId} />
 
-        <main className="dashboard-content">
-          <div ref={svgRef}></div>
-        </main>
-      </div>
+      <main className="dashboard-content">
+        <div ref={svgRef}></div>
+      </main>
     </div>
-  );
+
+    {selectedStudent && (
+      <GradeAssignment
+        key={`${selectedStudent.assignmentId}-${selectedStudent.userId}`}
+        assignmentId={assignmentId}
+        userId={selectedStudent.userId}
+        grade={selectedStudent.grade}
+        onClose={() => setSelectedStudent(null)}
+        onGradeUpdated={(updatedGrade) => {
+          setSubmissions((prev) =>
+            prev.map((submission) =>
+              submission.userId === selectedStudent.userId
+                ? { ...submission, grade: updatedGrade }
+                : submission
+            )
+          );
+        }}
+      />
+    )}
+  </div>
+);
 }

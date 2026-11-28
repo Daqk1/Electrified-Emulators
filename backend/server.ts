@@ -325,10 +325,29 @@ app.get("/api/assignment-data/:assignmentId", async (req, res) => {
 
     const assignments = await Assignment.find({
       assignmentId: assignmentId,
-    });
-    console.log("Assignments found:", assignments);
+    }).lean();
 
-    res.json(assignments);
+    // get students name
+    const assignmentWithNames = await Promise.all(
+      assignments.map(async (assignment) => {
+        if (assignment.userId == null) {
+          return {
+            ...assignment,
+            studentName: "Unknown Student",
+          };
+        }
+
+        const student = await User.findOne({
+          UserID: assignment.userId,
+        }).lean();
+
+        return {
+          ...assignment,
+          studentName: student?.Name ?? "Unknown Student",
+        };
+      }),
+    );
+    res.json(assignmentWithNames);
   } catch (error) {
     console.error("Error fetching assignments:", error);
 
@@ -423,39 +442,25 @@ app.post("/api/personal-projects", async (req, res) => {
 
 app.post("/api/assignments", async (req, res) => {
   try {
-    const {
-      courseId,
-      assignmentName,
-      description,
-      dueAt,
-      pointsPossible,
-    } = req.body;
+    const { courseId, assignmentName, description, dueAt, pointsPossible } =
+      req.body;
 
     const numericCourseId = Number(courseId);
     const numericPointsPossible = Number(pointsPossible);
 
-    if (
-      !Number.isInteger(numericCourseId) ||
-      numericCourseId <= 0
-    ) {
+    if (!Number.isInteger(numericCourseId) || numericCourseId <= 0) {
       return res.status(400).json({
         message: "Invalid course ID",
       });
     }
 
-    if (
-      typeof assignmentName !== "string" ||
-      assignmentName.trim() === ""
-    ) {
+    if (typeof assignmentName !== "string" || assignmentName.trim() === "") {
       return res.status(400).json({
         message: "Assignment name is required",
       });
     }
 
-    if (
-      !Number.isFinite(numericPointsPossible) ||
-      numericPointsPossible < 0
-    ) {
+    if (!Number.isFinite(numericPointsPossible) || numericPointsPossible < 0) {
       return res.status(400).json({
         message: "Invalid points possible",
       });
@@ -472,8 +477,9 @@ app.post("/api/assignments", async (req, res) => {
       });
     }
 
-    const lastAssignment = await Assignment.findOne()
-      .sort({ assignmentId: -1 });
+    const lastAssignment = await Assignment.findOne().sort({
+      assignmentId: -1,
+    });
 
     const newAssignmentId = lastAssignment
       ? (lastAssignment.assignmentId ?? 0) + 1
@@ -484,17 +490,13 @@ app.post("/api/assignments", async (req, res) => {
       courseId: numericCourseId,
       assignmentId: newAssignmentId,
       assignmentName: assignmentName.trim(),
-      description:
-        typeof description === "string"
-          ? description.trim()
-          : "",
+      description: typeof description === "string" ? description.trim() : "",
       dueAt: dueAt ? new Date(dueAt) : undefined,
       pointsPossible: numericPointsPossible,
       status: "not submitted" as const,
     }));
 
-    const createdAssignments =
-      await Assignment.insertMany(assignments);
+    const createdAssignments = await Assignment.insertMany(assignments);
 
     return res.status(201).json({
       message: "Assignment created successfully",
@@ -509,6 +511,81 @@ app.post("/api/assignments", async (req, res) => {
     });
   }
 });
+
+app.patch("/api/grade/:assignmentId/:userId", async (req, res) => {
+  try {
+    // 1. Get assignment ID, student ID, and grade
+    const assignmentId = Number(req.params.assignmentId);
+    const userId = Number(req.params.userId);
+    const grade = req.body.grade;
+
+    // 2. Validate the IDs
+    if (
+      !Number.isInteger(assignmentId) ||
+      !Number.isInteger(userId)
+    ) {
+      return res.status(400).json({
+        message: "Invalid assignment ID or student ID",
+      });
+    }
+
+    // 3. Validate the grade
+    if (
+      typeof grade !== "number" ||
+      !Number.isFinite(grade) ||
+      grade < 0
+    ) {
+      return res.status(400).json({
+        message: "Invalid grade",
+      });
+    }
+
+    // 4. Find the correct student's assignment
+    const assignment = await Assignment.findOne({
+      assignmentId: assignmentId,
+      userId: userId,
+    });
+
+    // 5. Check if the assignment exists
+    if (!assignment) {
+      return res.status(404).json({
+        message: "Student assignment not found",
+      });
+    }
+
+    // 6. Check the maximum possible grade
+    if (
+      assignment.pointsPossible != null &&
+      grade > assignment.pointsPossible
+    ) {
+      return res.status(400).json({
+        message: "Grade exceeds maximum points",
+      });
+    }
+
+    // 7. Update the grade
+    assignment.grade = grade;
+
+    // 8. Save the updated assignment to MongoDB
+    await assignment.save();
+
+    // 9. Send the updated grade to the frontend
+    return res.status(200).json({
+      message: "Grade updated successfully",
+      grade: assignment.grade,
+    });
+
+  } catch (error) {
+    console.error("Error updating grade:", error);
+
+    return res.status(500).json({
+      message: "Failed to update grade",
+    });
+  }
+});
+
+
+
 // Connect MongoDB and start server
 async function startServer() {
   try {

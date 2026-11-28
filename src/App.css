@@ -63,13 +63,13 @@ body {
   position: relative;
   width: 100vw;
   height: 100vh;
+  overflow: hidden;
 
-  background-image: url("/CircuitEDU Login Background 1.1.png");
-  background-size: cover;
+  background-color: #1e1e24;
+  background-image: url("/login-background.png");
+  background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
-
-  overflow: hidden;
 }
 
 #headerSVG {
@@ -190,7 +190,9 @@ body {
   font-weight: bold;
   line-height: 1;
   cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .add-project-button:hover {
@@ -495,4 +497,22 @@ body {
   color: #ff7777;
   font-family: Arial, sans-serif;
   font-size: 14px;
+}
+.addGrade {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+
+  width: 350px;
+  padding: 25px;
+
+  background-color: #26262e;
+  color: white;
+
+  border: none;
+  border-radius: 12px;
+}
+
+.addGrade::backdrop {
+  background-color: rgba(0, 0, 0, 0.6);
 }

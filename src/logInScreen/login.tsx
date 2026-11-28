@@ -138,18 +138,10 @@ function Login() {
   }
 
   return (
-    <div
-      className="login-container"
-      style={{
-        backgroundImage:
-          'url("/CircuitEDU Login Background 1.1.png")',
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        width: "100vw",
-        height: "100vh",
-      }}
-    >
+   <div
+  className="login-container"
+ 
+>
       <img
         src="/CircuitEDU.png"
         alt="CircuitEDU Logo"
